@@ -70,6 +70,12 @@ def process_finding(
 
     local_workdir = base_workdir / target_dir
 
+    subprocess.run(
+        ('git', 'fetch'),
+        cwd=local_workdir,
+        check=True
+    )
+
     tag_and_push(workdir=local_workdir, commit=audited_commit, tag=f"audited-{project_id}-{index}", remote=remote)
 
     if reported_remediated_commit is not None:
