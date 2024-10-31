@@ -1,0 +1,123 @@
+{
+  "audited_project_id": 6,
+  "project_name": "ReefChain",
+  "auditor": "Halborn",
+  "audit_link": "https://github.com/HalbornSecurity/PublicReports/blob/master/Substrate%20Audits/Reef_Chain_Substrate_Security_Audit_Report_Halborn_v1_1.pdf",
+  "findings": [
+    {
+      "title": "Integer overflow",
+      "repository": "https://github.com/reef-defi/reef-chain",
+      "audited_commit": "393d0c0821cc25ea5c6912d9cac8f61a9232c9a3",
+      "reported_remediated_commit": "6e4153498a28d03b8600739709cb200065c88781",
+      "location": [
+        {
+          "file_path": "modules/evm-accounts/src/lib.rs",
+          "lines": [182, 313, 314]
+        },
+        {
+          "file_path": "modules/evm-bridge/src/lib.rs",
+          "lines": [183, 186, 191]
+        }
+      ],
+      "reported_impact": "3",
+      "reported_likelihood": "3",
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "description": "3.1 (HAL-01) INTEGER OVERFLOW - MEDIUM\nDescription:\nAn overflow happens when an arithmetic operation reaches the maximum size of a type. For instance, in the ethereum_signable_message() method, an if statement is summing up a few u32 values, which may end up overflowing the integer. In computer programming, an integer overflow occurs when an arithmetic operation attempts to create a numeric value that is outside of the range that can be represented with a given number of bits—either larger than the maximum or lower than the minimum representable value.\n\nCode Location:\nListing 1: modules/evm-accounts/src/lib.rs (Lines 182)\n180 pub fn ethereum_signable_message(what: &[u8], extra: &[u8]) -> Vec<u8> {\n181 let prefix = b\"reef evm:\";\n182 let mut l = prefix.len() + what.len() + extra.len();\n183 let mut rev = Vec::new();\n\nListing 2: modules/evm-accounts/src/lib.rs (Lines 313,314)\n312 pub fn to_ascii_hex(data: &[u8]) -> Vec<u8> {\n313 let mut r = Vec::with_capacity(data.len() * 2);\n314 let mut push_nibble = |n| r.push(if n < 10 { b'0' + n } else { b'a' - 10 + n });\n\nListing 3: modules/evm-bridge/src/lib.rs (Lines 183,186,191)\n182 let offset = U256::from_big_endian(&output[0..32]);\n183 let length = U256::from_big_endian(&output[offset.as_usize()..offset.as_usize() + 32]);\n184 ensure!(\n// output is 32-byte aligned. ensure total_length >= offset + string length + string data length.\n186 output.len() >= offset.as_usize() + 32 + length.as_usize(),\n187 Error::<T>::InvalidReturnValue\n188 );\n189 let mut data = Vec::new();\n191 data.extend_from_slice(&output[offset.as_usize() + 32..offset.as_usize() + 32 + length.as_usize()]);\n\nRisk Level:\nLikelihood - 3\nImpact - 3\n\nRecommendations:\nIt is recommended to use vetted safe math libraries for arithmetic operations consistently throughout the smart contract system. Consider replacing the addition and multiplication operators with Rust’s checked_add and checked_mul methods.\n\nRemediation:\nSOLVED: Reef fixed the issue in commit 6e4153498a28d03b8600739709cb200065c88781.",
+      "description_summary": "Integer overflow vulnerability due to unchecked arithmetic operations in ethereum_signable_message and to_ascii_hex functions."
+    },
+    {
+      "title": "Total issuance not updated on mint",
+      "repository": "https://github.com/reef-defi/reef-chain",
+      "audited_commit": "393d0c0821cc25ea5c6912d9cac8f61a9232c9a3",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "modules/currencies/src/lib.rs",
+          "lines": [168]
+        }
+      ],
+      "reported_impact": "3",
+      "reported_likelihood": "3",
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "description": "3.2 (HAL-02) TOTAL ISSUANCE NOT UPDATED ON MINT - MEDIUM\nDescription:\nThe update_balance dispatchable defined in modules/currencies/src/lib.rs does not update the total issuance of the currency (identified by user-supplied ID) which is minted to the target address. This may lead to discrepancies in token data.\n\nCode Location:\nListing 4: modules/currencies/src/lib.rs (Lines 168)\n159 #[pallet::weight(T::WeightInfo::update_balance_non_native_currency())]\n160 pub fn update_balance(\n161 origin: OriginFor<T>,\n162 who: <T::Lookup as StaticLookup>::Source,\n163 currency_id: CurrencyIdOf<T>,\n164 amount: AmountOf<T>,\n165 ) -> DispatchResultWithPostInfo {\n166 ensure_root(origin)?;\n167 let dest = T::Lookup::lookup(who)?;\n168 <Self as MultiCurrencyExtended<T::AccountId>>::update_balance(currency_id, &dest, amount)?;\n169 Ok(().into())\n170 }\n\nRisk Level:\nLikelihood - 3\nImpact - 3\n\nRecommendations:\nTotal issuance should be updated every time tokens are minted or burned.\n\nRemediation Plan:\nACKNOWLEDGED: Reef states that the affected function is sudo only and will be deprecated in a future release.",
+      "description_summary": "Total issuance is not updated on mint, causing potential discrepancies in token data."
+    },
+    {
+      "title": "Casting overflow",
+      "repository": "https://github.com/reef-defi/reef-chain",
+      "audited_commit": "26ed9e88e773f5d628c01d558945cd38cd5a7d5a",
+      "reported_remediated_commit": "313439bb7940afa0f0d5060fbcbbe26d5a3e5298",
+      "location": [
+        {
+          "file_path": "modules/evm-bridge/src/lib.rs",
+          "lines": [183, 186, 191]
+        }
+      ],
+      "reported_impact": "3",
+      "reported_likelihood": "2",
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "description": "3.3 (HAL-03) CASTING OVERFLOW - LOW\nDescription:\nWhen converting or casting between types, an “overflow”/wrapping may occur and result in logic bugs leading to thread panic. The decode_string utility method defined in modules/evm-bridge/src/lib.rs does not validate if the values of the offset and length variables can be cast to the usize type. Although the method is not exported and available externally, the method is vulnerable still and the risk could increase in the future if the method is used before it’s patched.\n\nCode Location:\nListing 5: modules/evm-bridge/src/lib.rs (Lines 183,186,191)\n182 let offset = U256::from_big_endian(&output[0..32]);\n183 let length = U256::from_big_endian(&output[offset.as_usize()..offset.as_usize() + 32]);\n184 ensure!(\n// output is 32-byte aligned. ensure total_length >= offset + string length + string data length.\n186 output.len() >= offset.as_usize() + 32 + length.as_usize(),\n187 Error::<T>::InvalidReturnValue\n188 );\n189 let mut data = Vec::new();\n191 data.extend_from_slice(&output[offset.as_usize() + 32..offset.as_usize() + 32 + length.as_usize()]);\n\nRisk Level:\nLikelihood - 2\nImpact - 3\n\nRecommendations:\nCheck the value against maximum type value before casting.\n\nListing 6:\n1 if (x <= usize::MAX) {\n2 // logic ...\n3 }\n\nRemediation:\nSOLVED: Reef fixed the issue in commit 313439bb7940afa0f0d5060fbcbbe26d5a3e5298.",
+      "description_summary": "Casting overflow vulnerability due to unchecked type conversion in decode_string method."
+    },
+    {
+      "title": "Slash amount validation missing",
+      "repository": "https://github.com/reef-defi/reef-chain",
+      "audited_commit": "393d0c0821cc25ea5c6912d9cac8f61a9232c9a3",
+      "reported_remediated_commit": "bd43bec58890be763b32bfdfd18ba85a8c0ef9e5",
+      "location": [
+        {
+          "file_path": "modules/currencies/src/lib.rs",
+          "lines": [396]
+        }
+      ],
+      "reported_impact": "2",
+      "reported_likelihood": "2",
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "description": "3.4 (HAL-04) SLASH AMOUNT VALIDATION MISSING - LOW\nDescription:\nThe slash_reserved method defined in modules/currencies/src/lib.rs does not validate if the value of the user-supplied value parameter exceeds the actual balance of the account owned by the address that is to have its ERC20 tokens slashed.\n\nCode Location:\nListing 7: modules/currencies/src/lib.rs (Lines 396)\n394 fn slash_reserved(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> Self::Balance {\n395 match currency_id {\n396 CurrencyId::ERC20(_) => value,\n397 CurrencyId::Token(TokenSymbol::REEF) => T::NativeCurrency::slash_reserved(who, value),\n398 _ => T::MultiCurrency::slash_reserved(currency_id, who, value),\n399 }\n400 }\n\nRisk Level:\nLikelihood - 2\nImpact - 2\n\nRecommendations:\nThe slashed amount should always be lesser or equal to the account balance that is to be slashed.\n\nRemediation:\nSOLVED: Reef fixed the issue in commit bd43bec58890be763b32bfdfd18ba85a8c0ef9e5.",
+      "description_summary": "Missing validation in slash_reserved method allows slashing beyond account balance."
+    },
+    {
+      "title": "Currency ID validation missing",
+      "repository": "https://github.com/reef-defi/reef-chain",
+      "audited_commit": "393d0c0821cc25ea5c6912d9cac8f61a9232c9a3",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "modules/currencies/src/lib.rs",
+          "lines": [
+            125, 178, 186, 199, 217, 235, 290, 303, 316, 324, 336, 376, 386,
+            394, 402, 423, 445
+          ]
+        }
+      ],
+      "reported_impact": "2",
+      "reported_likelihood": "2",
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "description": "3.5 (HAL-05) CURRENCY ID VALIDATION MISSING - LOW\nDescription:\nMany dispatchables and helper methods defined in modules/currencies/src/lib.rs do not check if the user-supplied currency ID matches any of the existing ones before calling the possibly resource-intensive underlying utility functions.\n\nCode Location:\nListing 8: modules/evm-accounts/src/lib.rs (Lines 125)\n121 #[pallet::weight(T::WeightInfo::transfer_non_native_currency())]\n122 pub fn transfer(\n123 origin: OriginFor<T>,\n124 dest: <T::Lookup as StaticLookup>::Source,\n125 currency_id: CurrencyIdOf<T>,\n126 #[pallet::compact] amount: BalanceOf<T>,\n127 ) -> DispatchResultWithPostInfo {\n128 let from = ensure_signed(origin)?;\n129 let to = T::Lookup::lookup(dest)?;\n130 <Self as MultiCurrency<T::AccountId>>::transfer(currency_id, &from, &to, amount)?;\n131 Ok(().into())\n132 }\n\nList of all the functions that fail to validate the currency ID:\nListing 9: (Lines 2,3)\n1 auditor@halborn:~/projects/reef/reef-chain/modules/currencies$ \\\n2 > grep -ne 'fn.*CurrencyId' src/lib.rs \\\n3 > | cut -d '-' -f 1\n4 178: fn minimum_balance(currency_id: Self::CurrencyId)\n5 186: fn total_issuance(currency_id: Self::CurrencyId)\n6 199: fn total_balance(currency_id: Self::CurrencyId, who: &T::AccountId)\n7 217: fn free_balance(currency_id: Self::CurrencyId, who: &T::AccountId)\n8 235: fn ensure_can_withdraw(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance)\n9 290: fn deposit(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance)\n10 303: fn withdraw(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance)\n11 316: fn can_slash(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance)\n12 324: fn slash(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance)\n13 336: fn update_balance(currency_id: Self::CurrencyId, who: &T::AccountId, by_amount: Self::Amount)\n14 376: fn remove_lock(lock_id: LockIdentifier, currency_id: Self::CurrencyId, who: &T::AccountId)\n15 386: fn can_reserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance)\n16 394: fn slash_reserved(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance)\n17 402: fn reserved_balance(currency_id: Self::CurrencyId, who: &T::AccountId)\n18 423: fn reserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance)\n19 445: fn unreserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance)\n\nRisk Level:\nLikelihood - 2\nImpact - 2\n\nRecommendations:\nIt is recommended to validate all user-supplied input in order to avoid executing unnecessary operations and mitigate the risk of resource exhaustion.\n\nRemediation Plan:\nACKNOWLEDGED: Reef states that there is only 1 currency id in use, and there likely won’t be more going forward.",
+      "description_summary": "Missing validation for currency ID in multiple methods could lead to resource exhaustion."
+    },
+    {
+      "title": "Vector capacity validation missing",
+      "repository": "https://github.com/reef-defi/reef-chain",
+      "audited_commit": "393d0c0821cc25ea5c6912d9cac8f61a9232c9a3",
+      "reported_remediated_commit": "6b826f7ca16d1a30f3fa55f0606d0b94b69b2b3a",
+      "location": [
+        {
+          "file_path": "modules/evm-accounts/src/lib.rs",
+          "lines": [313]
+        }
+      ],
+      "reported_impact": "2",
+      "reported_likelihood": "1",
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "description": "3.6 (HAL-06) VECTOR CAPACITY VALIDATION MISSING - INFORMATIONAL\nDescription:\nThe to_ascii_hex utility function defined in modules/evm-accounts/src/lib.rs when creating a new Vec<u8> from the user-supplied data slice with a Vec::with_capacity method does not validate if the capacity of the new vector exceeds the maximum allowed capacity.\n\nCode Location:\nListing 10: modules/currencies/src/lib.rs (Lines 313)\n312 pub fn to_ascii_hex(data: &[u8]) -> Vec<u8> {\n313 let mut r = Vec::with_capacity(data.len() * 2);\n314 let mut push_nibble = |n| r.push(if n < 10 { b'0' + n } else { b'a' - 10 + n });\n315 for &b in data.iter() {\n316 push_nibble(b / 16);\n317 push_nibble(b % 16);\n318 }\n319 r\n320 }\n\nRisk Level:\nLikelihood - 1\nImpact - 2\n\nRecommendations:\nValidate if the new capacity (data.len() * 2) does not exceed isize::MAX bytes.\n\nRemediation:\nSOLVED: Reef fixed the issue in commit 6b826f7ca16d1a30f3fa55f0606d0b94b69b2b3a.",
+      "description_summary": "Missing validation in to_ascii_hex function allows vector capacity to exceed maximum limit."
+    }
+  ]
+}
