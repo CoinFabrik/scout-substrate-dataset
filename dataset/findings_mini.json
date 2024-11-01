@@ -1,0 +1,1583 @@
+[
+  {
+    "audited_project_id": 1,
+    "project_name": "Parallel",
+    "auditor": "Trail of Bits",
+    "audit_link": "https://github.com/parallel-finance/auditing-report/blob/main/Trail%20of%20Bits_Parallel%20Finance_Final%20Report.pdf",
+    "findings": [
+      {
+        "title": "Vulnerable dependencies in the Substrate parachain",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "location": null,
+        "reported_impact": "Medium",
+        "reported_likelihood": "Difficulty-High",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Patching",
+        "description_summary": "The Substrate parachain uses dependencies with known vulnerabilities, including chrono, lru, time, and net2, which may lead to potential segfaults or memory issues."
+      },
+      {
+        "title": "Users can avoid accruing interest by repaying a zero amount",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/loans/src/lib.rs",
+            "lines": [
+              {
+                "from": 1057,
+                "to": 1087
+              },
+              {
+                "from": 1106,
+                "to": 1121
+              }
+            ]
+          }
+        ],
+        "reported_impact": "Medium",
+        "reported_likelihood": "Difficulty-Low",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "description_summary": "Users can avoid paying interest on loans by repaying a zero amount, resetting the borrow index without repaying anything."
+      },
+      {
+        "title": "Missing validation in Pallet::force_update_market",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/loans/src/lib.rs",
+            "lines": [
+              {
+                "from": 539,
+                "to": 556
+              }
+            ]
+          }
+        ],
+        "reported_impact": "Informational",
+        "reported_likelihood": "Difficulty-High",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "description_summary": "The force_update_market method lacks sufficient validation, potentially allowing unintended changes to immutable market parameters."
+      },
+      {
+        "title": "Missing validation in multiple StakingLedger methods",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/liquid-staking/src/types.rs",
+            "lines": [
+              {
+                "from": 199,
+                "to": 219
+              },
+              {
+                "from": 223,
+                "to": 226
+              },
+              {
+                "from": 230,
+                "to": 253
+              }
+            ]
+          }
+        ],
+        "reported_impact": "Undetermined",
+        "reported_likelihood": "Difficulty-High",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "description_summary": "StakingLedger methods lack sufficient input validation and unchecked arithmetic, potentially leading to inconsistent states or race conditions."
+      },
+      {
+        "title": "Failed XCM requests left in storage",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "file_path": "pallets/liquid-staking/src/lib.rs",
+        "reported_impact": "Low",
+        "reported_likelihood": "Difficulty-High",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "vulnerable_components": [
+          "notification_received",
+          "do_notification_received"
+        ],
+        "lines": [
+          {
+            "from": 1071,
+            "to": 1159
+          }
+        ],
+        "description_summary": "Failed XCM requests are left in storage indefinitely if not handled properly by the notification_received method."
+      },
+      {
+        "title": "Failed XCM requests left in storage",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/liquid-staking/src/lib.rs",
+            "lines": [
+              {
+                "from": 1071,
+                "to": 1159
+              }
+            ]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": "Difficulty-High",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "description_summary": "The loans pallet may use stale oracle prices, leading to incorrect asset valuations."
+      },
+      {
+        "title": "Missing calculations in crowdloans extrinsics",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/crowdloans/src/lib.rs",
+            "lines": [
+              {
+                "from": 718,
+                "to": 765
+              }
+            ]
+          }
+        ],
+        "reported_impact": "Undetermined",
+        "reported_likelihood": "Difficulty-High",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Undefined Behavior",
+        "description_summary": "The claim and refund extrinsics do not update the vault's total contribution, leading to incorrect calculations."
+      },
+      {
+        "title": "Event emitted when update_vault and set_vrf calls do not make updates",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/crowdloans/src/lib.rs",
+            "lines": [
+              {
+                "from": 424,
+                "to": 472
+              },
+              {
+                "from": 599,
+                "to": 616
+              }
+            ]
+          }
+        ],
+        "reported_impact": "Informational",
+        "reported_likelihood": "Difficulty-High",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Auditing and Logging",
+        "description_summary": "The update_vault and set_vrfs extrinsics emit events even when no actual updates are made."
+      },
+      {
+        "title": "The referral code is a sequence of arbitrary bytes",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "file_path": "pallets/crowdloans/src/lib.rs",
+        "reported_impact": "Informational",
+        "reported_likelihood": "Difficulty-High",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "vulnerable_components": ["contribute"],
+        "lines": [
+          {
+            "from": 502,
+            "to": 594
+          }
+        ],
+        "description_summary": "The referral code in the crowdloans pallet is arbitrary and unvalidated, potentially allowing log injection attacks."
+      },
+      {
+        "title": "Missing validation of referral code size",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/crowdloans/src/lib.rs",
+            "lines": [
+              {
+                "from": 1429,
+                "to": 1464
+              }
+            ]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": "Difficulty-Low",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "description_summary": "The contribute extrinsic lacks validation on the referral code size, potentially leading to memory exhaustion."
+      },
+      {
+        "title": "Code duplication in crowdloans pallet",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/crowdloans/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Informational",
+        "reported_likelihood": "Difficulty-High",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Patching",
+        "description_summary": "Code duplication in the crowdloans pallet increases the risk of inconsistent patches and complicates maintenance."
+      }
+    ]
+  },
+  {
+    "audited_project_id": 2,
+    "project_name": "Parallel",
+    "auditor": "Slow Mist",
+    "audit_link": "https://github.com/parallel-finance/auditing-report/blob/main/Slow%20Mist%20-%20Parallel%20Security%20Audit%20Report.pdf",
+    "findings": [
+      {
+        "title": "Need to upgrade the module",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "a223cd7910af3540048b58f958fea5b784876468",
+        "reported_remediated_commit": "fc6d8042ba51719e0f1bca40631e4649a6100510",
+        "location": null,
+        "reported_impact": "low-risk",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Memory access vulnerability in Cranelift module due to code generation flaw, fixed by upgrading to >= 0.73.1 or >= 0.74."
+      },
+      {
+        "title": "Numeric overflow",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "a223cd7910af3540048b58f958fea5b784876468",
+        "reported_remediated_commit": "386b0e7e1eea19c143900d4127daa8c475266dad",
+        "location": [
+          {
+            "file_path": "parallel/pallets/loans/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "enhancement",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Numeric overflow vulnerability due to lack of checked_add/checked_sub, fixed by adding these methods."
+      },
+      {
+        "title": "Lack of bounds checking",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "a223cd7910af3540048b58f958fea5b784876468",
+        "reported_remediated_commit": "2bb80a4e75416e27a03ffb9f8d3100aca548d8b2",
+        "location": [
+          {
+            "file_path": "parallel/pallets/loans/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "weakness",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Lack of bounds checking for mint_amount, recommended to enhance."
+      },
+      {
+        "title": "Oracle price feed risk",
+        "repository": "https://github.com/parallel-finance/parallel",
+        "audited_commit": "a223cd7910af3540048b58f958fea5b784876468",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "parallel/pallets/prices/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "weakness",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Oracle price feed may be inaccurate due to lack of a time parameter."
+      }
+    ]
+  },
+  {
+    "audited_project_id": 3,
+    "project_name": "AvaProtocol",
+    "auditor": "Slow Mist",
+    "audit_link": "https://avaprotocol.org/docs/papers/SlowMist.Audit.Report.-.Turing.Network.-.June.2022.pdf",
+    "findings": [
+      {
+        "title": "Calculate inaccurate risk",
+        "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+        "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+        "reported_remediated_commit": "cba1acd6961fce877cef95c6b6a198ea8b415a0f",
+        "location": [
+          {
+            "file_path": "pallets/automation-time/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Suggestion",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Integer Overflow",
+        "description_summary": "Inaccurate calculation risk due to potential integer overflow; replace saturating operations with checked operations."
+      },
+      {
+        "title": "User balance is not checked before transfer",
+        "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+        "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/automation-time/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Suggestion",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Others",
+        "description_summary": "User balance is not checked before transfer, allowing potential insufficient funds."
+      },
+      {
+        "title": "Return value not checked",
+        "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+        "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/parachain-staking/src/lib.rs",
+            "lines": [962, 1004, 1390]
+          },
+          {
+            "file_path": "pallets/parachain-staking/src/types.rs",
+            "lines": [463]
+          },
+          {
+            "file_path": "pallets/parachain-staking/src/delegation_requests.rs",
+            "lines": [
+              279,
+              {
+                "from": 648,
+                "to": 651
+              }
+            ]
+          },
+          {
+            "file_path": "pallets/parachain-staking/src/migrations.rs",
+            "lines": [404]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Others",
+        "description_summary": "Return value of unreserve function is not checked, risking unhandled errors."
+      },
+      {
+        "title": "Calculate inaccurate risk",
+        "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+        "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/parachain-staking/src/types.rs",
+            "lines": null
+          },
+          {
+            "file_path": "pallets/parachain-staking/src/lib.rs",
+            "lines": null
+          },
+          {
+            "file_path": "pallets/parachain-staking/src/delegation_requests.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Suggestion",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Integer Overflow",
+        "description_summary": "Potential inaccurate calculation due to integer overflow; replace saturating operations with checked operations."
+      },
+      {
+        "title": "Missing logic",
+        "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+        "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/parachain-staking/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Others",
+        "description_summary": "Missing rollback logic for failed transfers in staking payouts."
+      },
+      {
+        "title": "Missing error message",
+        "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+        "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/parachain-staking/src/types.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Malicious Event Log",
+        "description_summary": "Missing error message in delegation handling, leaving potential issues unlogged."
+      }
+    ]
+  },
+  {
+    "audited_project_id": 4,
+    "project_name": "Pendulum",
+    "auditor": "Hacken",
+    "audit_link": "https://audits.hacken.io/pendulum/l1-pendulum-pendulum-chain-jun2023/",
+    "findings": [
+      {
+        "title": "ChainExtension Implementation Lacks Weight Charging",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": "5b922a210b2a6705d3ea6fefbf67b317698f7b80",
+        "location": [
+          {
+            "file_path": "runtime/foucoco/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Medium",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Denial-of-Service (DoS)",
+        "description_summary": "The ChainExtension implementation does not charge weight for runtime calls, making the system vulnerable to Denial-of-Service (DoS) attacks."
+      },
+      {
+        "title": "Vector of unlimited size in the pallet",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": "05607a1a9cd2ad3cebeff1294b2e4c34fa3e4721",
+        "location": [
+          {
+            "file_path": "pallets/orml-currencies-allowance-extension/src/lib.rs",
+            "lines": [134]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Memory exhaustion / DoS",
+        "description_summary": "Unrestricted vector size can lead to memory exhaustion and DoS attacks."
+      },
+      {
+        "title": "Employment of Sudo Pallet",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "runtime/foucoco/src/lib.rs",
+            "lines": [1509]
+          },
+          {
+            "file_path": "node/src/chain_spec.rs",
+            "lines": [229]
+          }
+        ],
+        "reported_impact": null,
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Centralization",
+        "description_summary": "The use of the sudo pallet risks centralization and security vulnerabilities due to potential misuse of root access."
+      },
+      {
+        "title": "Error Handling in Chain Extension",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "runtime/foucoco/src/lib.rs",
+            "lines": [null]
+          }
+        ],
+        "reported_impact": null,
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Code Quality",
+        "description_summary": "Use of generic DispatchError::Other hampers error handling and troubleshooting."
+      },
+      {
+        "title": "Hardcoded Constants in match",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "runtime/foucoco/src/lib.rs",
+            "lines": [964]
+          }
+        ],
+        "reported_impact": null,
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Code Quality",
+        "description_summary": "Hardcoded constants in match statements reduce code readability and maintainability."
+      },
+      {
+        "title": "Linter Warnings",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/orml-currencies-allowance-extension/src/lib.rs",
+            "lines": [245, 246]
+          }
+        ],
+        "reported_impact": null,
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Linters"
+      },
+      {
+        "title": "Logging in Runtime",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "runtime/foucoco/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": null,
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Code Quality",
+        "description_summary": "Excessive warn!() macros in the implementation of ChainExtension clutter code and reduce maintainability."
+      },
+      {
+        "title": "Pendulum build",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "Cargo.toml",
+            "lines": null
+          }
+        ],
+        "reported_impact": null,
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Build Process",
+        "description_summary": "Missing a member in the workspace configuration."
+      },
+      {
+        "title": "Superfluous Implementation of Hooks Trait",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/orml-currencies-allowance-extension/src/lib.rs",
+            "lines": [99]
+          }
+        ],
+        "reported_impact": null,
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Code Quality",
+        "description_summary": "The Hooks trait has been declared in the orml-currencies-allowance-extension pallet, but no custom implementations have been provided."
+      },
+      {
+        "title": "Test Coverage",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/orml-currencies-allowance-extension/src/lib.rs",
+            "lines": null
+          },
+          {
+            "file_path": "runtime/foucoco/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": null,
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Code Quality / Testing"
+      },
+      {
+        "title": "Vulnerable and Unmaintained Dependencies",
+        "repository": "https://github.com/pendulum-chain/pendulum",
+        "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/orml-currencies-allowance-extension/Cargo.toml",
+            "lines": null
+          }
+        ],
+        "reported_impact": null,
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Dependency Management",
+        "description_summary": "Dependency includes one vulnerable and three unmaintained crates requiring updates or replacements."
+      }
+    ]
+  },
+  {
+    "audited_project_id": 5,
+    "project_name": "Nodle",
+    "auditor": "Halborn",
+    "audit_link": "https://github.com/HalbornSecurity/PublicReports/blob/master/Substrate%20Audits/Nodle_Nodl_Substrate_Pallet_Security_Audit_Report_Halborn_Final.pdf",
+    "findings": [
+      {
+        "title": "TCR voting design should be improved",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": null,
+        "location": null,
+        "reported_impact": "3",
+        "reported_likelihood": "3",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "TCR voting design allows self-voting, zero-amount votes, and potential manipulation by large token holders."
+      },
+      {
+        "title": "Denomination logic should be improved",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": "2db8b4707606bf88b8fdefbe616d67a720e434ea",
+        "location": [
+          {
+            "file_path": "pallets/staking/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "2",
+        "reported_likelihood": "4",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Denomination logic bypasses minimum bond check when only one validator is nominated."
+      },
+      {
+        "title": "Emergency shutdown not used in critical functions",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets",
+            "lines": null
+          }
+        ],
+        "reported_impact": "4",
+        "reported_likelihood": "3",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Emergency shutdown functionality is missing in multiple critical public functions across different pallets."
+      },
+      {
+        "title": "Missing sanity checks",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": "2db8b4707606bf88b8fdefbe616d67a720e434ea",
+        "location": [
+          {
+            "file_path": "pallets/staking/src/lib.rs",
+            "lines": [
+              {
+                "from": 201,
+                "to": 208
+              }
+            ]
+          }
+        ],
+        "reported_impact": "2",
+        "reported_likelihood": "3",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Missing sanity checks in set_staking_limits function may allow invalid parameter values."
+      },
+      {
+        "title": "Vesting to yourself is allowed",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": "91cfe0cb3300811bb02a47c4cf70f68c7e48f94d",
+        "location": [
+          {
+            "file_path": "pallets/grants/src/lib.rs",
+            "lines": [
+              {
+                "from": 157,
+                "to": 168
+              }
+            ]
+          }
+        ],
+        "reported_impact": "2",
+        "reported_likelihood": "3",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Vesting schedule allows setting up a vesting to oneself without restrictions."
+      },
+      {
+        "title": "Missing zero value check",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": "f31c19a06ab0047f0c533c83ba67654eedfa6147",
+        "location": [
+          {
+            "file_path": "pallets/grants/src/lib.rs",
+            "lines": [88]
+          }
+        ],
+        "reported_impact": "2",
+        "reported_likelihood": "2",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Allocate function lacks a zero-value check for the amount argument."
+      },
+      {
+        "title": "Vesting schedules less than a current block can be created",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": null,
+        "location": null,
+        "reported_impact": "1",
+        "reported_likelihood": "1",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Vesting schedules can be created with start blocks earlier than the current block, making them redundant."
+      },
+      {
+        "title": "Redundant check",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": "91cfe0cb3300811bb02a47c4cf70f68c7e48f94d",
+        "location": [
+          {
+            "file_path": "pallets/grants/src/lib.rs",
+            "lines": [253]
+          }
+        ],
+        "reported_impact": "1",
+        "reported_likelihood": "1",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Redundant check of new_lock.is_zero() found in grants pallet."
+      },
+      {
+        "title": "Redundant variable",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": "91cfe0cb3300811bb02a47c4cf70f68c7e48f94d",
+        "location": [
+          {
+            "file_path": "pallets/tcr/src/lib.rs",
+            "lines": [
+              {
+                "from": 138,
+                "to": 152
+              },
+              478
+            ]
+          }
+        ],
+        "reported_impact": "1",
+        "reported_likelihood": "1",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Redundant variable old1 in on_finalize function."
+      },
+      {
+        "title": "Usage of vulnerable crates",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": null,
+        "location": null,
+        "reported_impact": "1",
+        "reported_likelihood": "2",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Usage of crates with known vulnerabilities identified."
+      },
+      {
+        "title": "Outdated Rust edition",
+        "repository": "https://github.com/NodleCode/chain/",
+        "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
+        "reported_remediated_commit": "41ce7de56ff6dd701de1f5d247c91aaff6803954",
+        "location": [
+          {
+            "file_path": "Cargo.toml",
+            "lines": null
+          }
+        ],
+        "reported_impact": "1",
+        "reported_likelihood": "1",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Project is using an outdated Rust edition (2018)."
+      }
+    ]
+  },
+  {
+    "audited_project_id": 6,
+    "project_name": "ReefChain",
+    "auditor": "Halborn",
+    "audit_link": "https://github.com/HalbornSecurity/PublicReports/blob/master/Substrate%20Audits/Reef_Chain_Substrate_Security_Audit_Report_Halborn_v1_1.pdf",
+    "findings": [
+      {
+        "title": "Integer overflow",
+        "repository": "https://github.com/reef-defi/reef-chain",
+        "audited_commit": "393d0c0821cc25ea5c6912d9cac8f61a9232c9a3",
+        "reported_remediated_commit": "6e4153498a28d03b8600739709cb200065c88781",
+        "location": [
+          {
+            "file_path": "modules/evm-accounts/src/lib.rs",
+            "lines": [182, 313, 314]
+          },
+          {
+            "file_path": "modules/evm-bridge/src/lib.rs",
+            "lines": [183, 186, 191]
+          }
+        ],
+        "reported_impact": "3",
+        "reported_likelihood": "3",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Integer overflow vulnerability due to unchecked arithmetic operations in ethereum_signable_message and to_ascii_hex functions."
+      },
+      {
+        "title": "Total issuance not updated on mint",
+        "repository": "https://github.com/reef-defi/reef-chain",
+        "audited_commit": "393d0c0821cc25ea5c6912d9cac8f61a9232c9a3",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "modules/currencies/src/lib.rs",
+            "lines": [168]
+          }
+        ],
+        "reported_impact": "3",
+        "reported_likelihood": "3",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Total issuance is not updated on mint, causing potential discrepancies in token data."
+      },
+      {
+        "title": "Casting overflow",
+        "repository": "https://github.com/reef-defi/reef-chain",
+        "audited_commit": "26ed9e88e773f5d628c01d558945cd38cd5a7d5a",
+        "reported_remediated_commit": "313439bb7940afa0f0d5060fbcbbe26d5a3e5298",
+        "location": [
+          {
+            "file_path": "modules/evm-bridge/src/lib.rs",
+            "lines": [183, 186, 191]
+          }
+        ],
+        "reported_impact": "3",
+        "reported_likelihood": "2",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Casting overflow vulnerability due to unchecked type conversion in decode_string method."
+      },
+      {
+        "title": "Slash amount validation missing",
+        "repository": "https://github.com/reef-defi/reef-chain",
+        "audited_commit": "393d0c0821cc25ea5c6912d9cac8f61a9232c9a3",
+        "reported_remediated_commit": "bd43bec58890be763b32bfdfd18ba85a8c0ef9e5",
+        "location": [
+          {
+            "file_path": "modules/currencies/src/lib.rs",
+            "lines": [396]
+          }
+        ],
+        "reported_impact": "2",
+        "reported_likelihood": "2",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Missing validation in slash_reserved method allows slashing beyond account balance."
+      },
+      {
+        "title": "Currency ID validation missing",
+        "repository": "https://github.com/reef-defi/reef-chain",
+        "audited_commit": "393d0c0821cc25ea5c6912d9cac8f61a9232c9a3",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "modules/currencies/src/lib.rs",
+            "lines": [
+              125, 178, 186, 199, 217, 235, 290, 303, 316, 324, 336, 376, 386,
+              394, 402, 423, 445
+            ]
+          }
+        ],
+        "reported_impact": "2",
+        "reported_likelihood": "2",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Missing validation for currency ID in multiple methods could lead to resource exhaustion."
+      },
+      {
+        "title": "Vector capacity validation missing",
+        "repository": "https://github.com/reef-defi/reef-chain",
+        "audited_commit": "393d0c0821cc25ea5c6912d9cac8f61a9232c9a3",
+        "reported_remediated_commit": "6b826f7ca16d1a30f3fa55f0606d0b94b69b2b3a",
+        "location": [
+          {
+            "file_path": "modules/evm-accounts/src/lib.rs",
+            "lines": [313]
+          }
+        ],
+        "reported_impact": "2",
+        "reported_likelihood": "1",
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Missing validation in to_ascii_hex function allows vector capacity to exceed maximum limit."
+      }
+    ]
+  },
+  {
+    "audited_project_id": 7,
+    "project_name": "MantaNetwork",
+    "auditor": "Veridise",
+    "audit_link": "https://github.com/Manta-Network/Atlantic-Audits/blob/main/Atlantic-Veridise-Chain.pdf",
+    "findings": [
+      {
+        "title": "Static fee charged despite dynamic storage accesses",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "parachain-staking/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Medium",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Bad Extrinsic Weight",
+        "description_summary": "Fixed fees are charged for dynamic storage operations, potentially leading to DoS as CandidatePool size grows."
+      },
+      {
+        "title": "Users can use any previously seen Merkle root",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-pay/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Medium",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Hash Collision",
+        "description_summary": "Allowing any previously seen Merkle root increases the risk of hash collisions, potentially allowing asset theft."
+      },
+      {
+        "title": "MantaPay weights calculated with a small database",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-pay/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Medium",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Bad Extrinsic Weight",
+        "description_summary": "Inadequate benchmarking of weights for MantaPay's Merkle tree could lead to DoS attacks as the tree grows."
+      },
+      {
+        "title": "Total supply of native assets can exceed the set limit",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/asset-manager/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Medium",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Logic Error",
+        "description_summary": "Native asset supply can exceed the maximum limit for an account, causing to_private transactions to fail."
+      },
+      {
+        "title": "Missing updates in update_asset_metadata",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/asset-manager/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Medium",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Logic Error",
+        "description_summary": "update_asset_metadata does not apply updates to min_balance and is_sufficient metadata as expected."
+      },
+      {
+        "title": "No slashing mechanism for collators",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "parachain-staking",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Medium",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Consensus",
+        "description_summary": "No automated slashing mechanism exists to penalize poorly performing collators, relying on social pressure and manual intervention."
+      },
+      {
+        "title": "Collators given full rewards regardless of quality",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/parachain-staking/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Medium",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Consensus",
+        "description_summary": "Collators receive full rewards regardless of block quality, allowing low-quality blocks to earn the same as high-quality ones."
+      },
+      {
+        "title": "Missing validation in pull_ledger_diff",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-pay/src/lib.rs",
+            "lines": [593]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "description_summary": "Missing bounds checks in pull_ledger_diff could lead to overflow, potentially crashing the node."
+      },
+      {
+        "title": "increase_count_of_associated_assets can overflow",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/asset-manager/src/lib.rs",
+            "lines": [590]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Logic Error",
+        "description_summary": "increase_count_of_associated_assets lacks overflow check, risking node crash or reset to zero in certain cases."
+      },
+      {
+        "title": "Account checks are incorrect",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-pay/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Logic Error",
+        "description_summary": "Account checks in transaction validation assume unique accounts, which may lead to issues if APIs change to allow multiple accounts."
+      },
+      {
+        "title": "Unstaked user may be selected as collator",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "parachain-staking/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Logic Error",
+        "description_summary": "Unstaked users may be selected as collators if no sufficiently staked collators are available, reducing network stability."
+      },
+      {
+        "title": "XCM instructions can charge 0 weight",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "runtime/calamari/src/weights/xcm/mod.rs",
+            "lines": null
+          },
+          {
+            "file_path": "runtime/dolphin/src/weights/xcm/mod.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Bad Extrinsic Weight",
+        "description_summary": "XCM instructions can be executed with zero weight, allowing potential spam through 0-cost messages."
+      },
+      {
+        "title": "Missing validation in set_units_per_second",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/asset-manager/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "description_summary": "Missing validation in set_units_per_second allows potential overflow, enabling weight to be purchased at low cost, risking DoS."
+      },
+      {
+        "title": "Collator is a single point of failure for a round",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": null,
+            "lines": null
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Consensus",
+        "description_summary": "Single collator selection creates a point of failure, risking block production halt if the collator goes down."
+      },
+      {
+        "title": "Unchecked index calculation in spend_all",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-pay/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Warning",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Logic Error",
+        "description_summary": "Unchecked index calculation in spend_all may cause overflow, leading to incorrect data insertion."
+      },
+      {
+        "title": "Excess fees not refunded",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "parachain-staking/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Warning",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Bad Extrinsic Weight",
+        "description_summary": "Extrinsics may charge unnecessary fees without refunding excess."
+      },
+      {
+        "title": "Assets can be registered at unsupported locations",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/asset-manager/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Warning",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "description_summary": "Assets can be registered without validating their location."
+      },
+      {
+        "title": "Minimum delegator funds is not MinDelegatorStk",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "parachain-staking/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Warning",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Logic Error",
+        "description_summary": "Delegators can have staked funds below the required MinDelegatorStk."
+      },
+      {
+        "title": "Unintended test crashes",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-pay/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Info",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Maintainability",
+        "description_summary": "Randomized test may fail due to unintended overflow in total supply generation."
+      }
+    ]
+  },
+  {
+    "audited_project_id": 8,
+    "project_name": "MantaNetwork",
+    "auditor": "Halborn",
+    "audit_link": "https://github.com/Manta-Network/Atlantic-Audits/blob/main/Atlantic-Halborn-zkSBT.pdf",
+    "findings": [
+      {
+        "title": "Loss of Reserved SBT IDs",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-sbt/src/lib.rs",
+            "lines": [376]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Users lose previously reserved SBT IDs if they reserve new ones without minting the old."
+      },
+      {
+        "title": "Last SBT IDs Cannot Be Reserved",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-sbt/src/lib.rs",
+            "lines": [369, 883]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Overflow in next_sbt_id_and_increment causes unreserved IDs and transaction failure."
+      },
+      {
+        "title": "Downcasting of 64-Bit Integer",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-sbt/src/lib.rs",
+            "lines": [783]
+          },
+          {
+            "file_path": "pallets/manta-support/src/manta_pay.rs",
+            "lines": [874, 1095, 1096]
+          },
+          {
+            "file_path": "runtime/calamari/src/migrations/staking.rs",
+            "lines": [70]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Casting usize to smaller types may cause data loss and unexpected behavior."
+      },
+      {
+        "title": "Unchecked Math Could Impact Weight Calculation",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "runtime/calamari/src/fee.rs",
+            "lines": [76]
+          },
+          {
+            "file_path": "primitives/manta/src/xcm.rs",
+            "lines": [183, 251, 252]
+          },
+          {
+            "file_path": "runtime/manta/src/fee.rs",
+            "lines": [47, 52]
+          },
+          {
+            "file_path": "runtime/common/src/lib.rs",
+            "lines": [115]
+          },
+          {
+            "file_path": "primitives/manta/src/constants.rs",
+            "lines": [110]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Unchecked math in weight calculations may lead to overflow, underflow, or division by zero errors."
+      }
+    ]
+  },
+  {
+    "audited_project_id": 9,
+    "project_name": "MantaNetwork",
+    "auditor": "Veridise",
+    "audit_link": "https://github.com/Manta-Network/Atlantic-Audits/blob/main/Atlantic-Veridise-zkSBT.pdf",
+    "findings": [
+      {
+        "title": "SBT reservations can be overwritten",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+        "reported_remediated_commit": "be7f1c7a8b7d35a84f657854032b2bf3b7e01ab8",
+        "location": [
+          {
+            "file_path": "pallets/manta-sbt/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Medium",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Logic Error",
+        "description_summary": "SBT reservations can be overwritten, causing users to lose reserved tokens."
+      },
+      {
+        "title": "Extrinsics charge static fees that do not account for Merkle tree updates",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+        "reported_remediated_commit": "f0ed5957c3bc87b4a4a2631f26aceefb9607f069",
+        "location": [
+          {
+            "file_path": "pallets/manta-sbt/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Bad Extrinsic Weight",
+        "description_summary": "Static fees for extrinsics do not account for Merkle tree updates, risking underpriced transactions."
+      },
+      {
+        "title": "Missing validation in pull_ledger_diff",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-sbt/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Warning",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "description_summary": "Missing bounds check in pull_ledger_diff could allow overflow and node crash."
+      },
+      {
+        "title": "Off-by-one error in to_private",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-sbt/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Warning",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Logic Error",
+        "description_summary": "Off-by-one error in to_private may prevent users from minting reserved tokens."
+      },
+      {
+        "title": "Unnecessary Storage Variable",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+        "reported_remediated_commit": "fa10f39afcd8882d14252f55ce08ffcab6321911",
+        "location": [
+          {
+            "file_path": "pallets/manta-sbt/src/lib.rs",
+            "lines": [382]
+          }
+        ],
+        "reported_impact": "Warning",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Gas Optimization",
+        "description_summary": "Unnecessary storage variable increases transaction fees and storage usage."
+      },
+      {
+        "title": "Missing validation when setting mint info",
+        "repository": "https://github.com/Manta-Network/Manta",
+        "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "pallets/manta-sbt/src/lib.rs",
+            "lines": null
+          }
+        ],
+        "reported_impact": "Info",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Data Validation",
+        "description_summary": "Missing validation allows minting periods to be set in the past, blocking minting."
+      }
+    ]
+  },
+  {
+    "audited_project_id": 10,
+    "project_name": "Astar",
+    "auditor": "Security Research Labs",
+    "audit_link": "https://github.com/polkadot-assurance-legion/pal-docs/blob/main/audits/24h1/astar-srl-2403.pdf",
+    "findings": [
+      {
+        "title": "Missing benchmarking for the lockdrop precompile dispatch",
+        "repository": "https://github.com/AstarNetwork/Astar",
+        "audited_commit": "282485aa2d50f12f42463bba1d393fce4c57c2a3",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "precompiles/dispatch-lockdrop/src/lib.rs",
+            "lines": [
+              {
+                "from": 88,
+                "to": 90
+              }
+            ]
+          }
+        ],
+        "reported_impact": "Info",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Underestimated weight_to_gas estimation due to missing benchmarking allows attackers to perform denial of service attacks."
+      },
+      {
+        "title": "Unbounded call length limit in lockdrop dispatch call",
+        "repository": "https://github.com/AstarNetwork/Astar",
+        "audited_commit": "282485aa2d50f12f42463bba1d393fce4c57c2a3",
+        "reported_remediated_commit": null,
+        "location": [
+          {
+            "file_path": "precompiles/dispatch-lockdrop/src/lib.rs",
+            "lines": [74, 104]
+          }
+        ],
+        "reported_impact": "Low",
+        "reported_likelihood": null,
+        "cwe_classification": null,
+        "vulnerability_class_audit": null,
+        "description_summary": "Unbounded call length in dispatch call allows attackers to cause heap overflow and perform denial of service attacks."
+      }
+    ]
+  },
+  {
+    "audited_project_id": 11,
+    "project_name": "Astar",
+    "auditor": "Zellic",
+    "audit_link": "https://github.com/polkadot-assurance-legion/pal-docs/blob/main/audits/24h1/astar-zellic-2401.pdf",
+    "findings": [
+      {
+        "title": "Weight calculation",
+        "repository": "https://github.com/AstarNetwork/Astar",
+        "audited_commit": "fc14b13401e1fb5e7391715fc76a308204173802",
+        "reported_remediated_commit": null,
+        "location": null,
+        "reported_impact": "Low",
+        "reported_likelihood": "Low",
+        "cwe_classification": null,
+        "vulnerability_class_audit": "Coding Mistakes",
+        "description_summary": "Constant weight for functions, ignores variable data in MetadataSymbol & MetadataName."
+      }
+    ]
+  }
+]
