@@ -1,0 +1,136 @@
+{
+  "audited_project_id": 3,
+  "project_name": "AvaProtocol",
+  "auditor": "Slow Mist",
+  "audit_link": "https://avaprotocol.org/docs/papers/SlowMist.Audit.Report.-.Turing.Network.-.June.2022.pdf",
+  "findings": [
+    {
+      "title": "Calculate inaccurate risk",
+      "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+      "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+      "reported_remediated_commit": "cba1acd6961fce877cef95c6b6a198ea8b415a0f",
+      "location": [
+        {
+          "file_path": "pallets/automation-time/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Suggestion",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Integer Overflow",
+      "description": "[N1] [Suggestion] Calculate inaccurate risk\nCategory: Integer Overflow Audit\nContent\npallets/automation-time/src/lib.rs\nThere are some risks of value overflow.\nsaturating_mul, saturating_sub, saturating_add and +-*/, +=, -=\nsaturating at the numeric bounds instead of overflowing, The returned result is inaccurate.\nSolution\nUse checked_add/checked_sub/checked_mul/checked_div instead of\nsaturating_add/saturating_sub/saturating_mul/saturating_div and +-*/, +=, -= .\nStatus\nFixed",
+      "description_summary": "Inaccurate calculation risk due to potential integer overflow; replace saturating operations with checked operations."
+    },
+    {
+      "title": "User balance is not checked before transfer",
+      "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+      "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/automation-time/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Suggestion",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Others",
+      "description": "[N2] [Suggestion] User balance is not checked\nCategory: Others\nContent\npallets/automation-time/src/lib.rs\nThe amount transferred by the user is not compared with the user's balance here, and the user may not have enough NativeToken.\npub fn schedule_native_transfer_task(\norigin: OriginFor<T>,\nprovided_id: Vec<u8>,\nexecution_times: Vec<UnixTime>,\nrecipient_id: T::AccountId,\n#[pallet::compact] amount: BalanceOf<T>,\n) -> DispatchResult {\nlet who = ensure_signed(origin)?;\n// check for greater than existential deposit\nif amount < T::NativeTokenExchange::minimum_balance() {\nErr(<Error<T>>::InvalidAmount)?\n}\n// check not sent to self\nif who == recipient_id {\nErr(<Error<T>>::TransferToSelf)?\n}\nlet action =\nAction::NativeTransfer { sender: who.clone(), recipient: recipient_id, amount };\nSelf::validate_and_schedule_task(action, who, provided_id, execution_times)?;\nOk(().into())\n}\nSolution\nCompare the user's transfer amount with the balance\nStatus\nIgnored; This is expected behaviour.",
+      "description_summary": "User balance is not checked before transfer, allowing potential insufficient funds."
+    },
+    {
+      "title": "Return value not checked",
+      "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+      "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/parachain-staking/src/lib.rs",
+          "lines": [962, 1004, 1390]
+        },
+        {
+          "file_path": "pallets/parachain-staking/src/types.rs",
+          "lines": [463]
+        },
+        {
+          "file_path": "pallets/parachain-staking/src/delegation_requests.rs",
+          "lines": [279, { "from": 648, "to": 651 }]
+        },
+        {
+          "file_path": "pallets/parachain-staking/src/migrations.rs",
+          "lines": [404]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Others",
+      "description": "[N3] [Low] Return Value Not Checked\nCategory: Others\nContent\npallets/parachain-staking/src/lib.rs\n//#L962\nT::Currency::unreserve(&bond.owner, bond.amount);\n//#L1004\nT::Currency::unreserve(&candidate, state.bond);\n//#L1390\nT::Currency::unreserve(&delegator, amount);\npallets/parachain-staking/src/types.rs\n//#L463\nT::Currency::unreserve(&who, request.amount.into());\n//#L648:651\nT::Currency::unreserve(&lowest_bottom_to_be_kicked.owner, lowest_bottom_to_be_kicked.amount);\npallets/parachain-staking/src/delegation_requests.rs\n//#L279\nT::Currency::unreserve(&delegator, amount);\npallets/parachain-staking/src/migrations.rs\n//#L404\nT::Currency::unreserve(&owner, *amount);\nThe return value of unreserve needs to be checked.\nSolution\nCheck the return value.\nStatus\nIgnored; If the account has less than that locked up. Not only is this unlikely to happen, there's nothing for parachain-staking to do if it occurs.",
+      "description_summary": "Return value of unreserve function is not checked, risking unhandled errors."
+    },
+    {
+      "title": "Calculate inaccurate risk",
+      "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+      "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/parachain-staking/src/types.rs",
+          "lines": null
+        },
+        {
+          "file_path": "pallets/parachain-staking/src/lib.rs",
+          "lines": null
+        },
+        {
+          "file_path": "pallets/parachain-staking/src/delegation_requests.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Suggestion",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Integer Overflow",
+      "description": "[N4] [Suggestion] Calculate inaccurate risk\nCategory: Integer Overflow Audit\nContent\npallets/parachain-staking/src/types.rs\npallets/parachain-staking/src/lib.rs\npallets/parachain-staking/src/delegation_requests.rs\nThere are some risks of value overflow.\nsaturating_mul, saturating_sub, saturating_add and +-*/, +=, -=\nsaturating at the numeric bounds instead of overflowing, The returned result is inaccurate.\nSolution\nUse checked_add/checked_sub/checked_mul/checked_div instead of\nsaturating_add/saturating_sub/saturating_mul/saturating_div and +-*/, +=, -= .\nStatus\nIgnored; These functions are performed on the Balance type. Since the same type is used for total_issuance I don't think we need to be worried about a portion of the issuance overflowing the data type.",
+      "description_summary": "Potential inaccurate calculation due to integer overflow; replace saturating operations with checked operations."
+    },
+    {
+      "title": "Missing logic",
+      "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+      "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/parachain-staking/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Others",
+      "description": "[N5] [Low] Missing logic\nCategory: Others\nContent\npallets/parachain-staking/src/lib.rs\nIt is necessary to make a judgment in the case of deposit_into_existing failure. If the transfer fails, the entire transaction needs to be rolled back.\nfn prepare_staking_payouts(now: RoundIndex) {\n// payout is now - delay rounds ago => now - delay > 0 else return early\nlet delay = T::RewardPaymentDelay::get();\nif now <= delay {\nreturn;\n}\nlet round_to_payout = now.saturating_sub(delay);\nlet total_points = <Points<T>>::get(round_to_payout);\nif total_points.is_zero() {\nreturn;\n}\nlet total_staked = <Staked<T>>::take(round_to_payout);\nlet total_issuance = Self::compute_issuance(total_staked);\nlet mut left_issuance = total_issuance;\n// reserve portion of issuance for parachain bond account\nlet bond_config = <ParachainBondInfo<T>>::get();\nlet parachain_bond_reserve = bond_config.percent * total_issuance;\nif let Ok(imb) = T::Currency::deposit_into_existing(&bond_config.account, parachain_bond_reserve) {\n// update round issuance iff transfer succeeds\nleft_issuance = left_issuance.saturating_sub(imb.peek());\nSelf::deposit_event(Event::ReservedForParachainBond {\naccount: bond_config.account,\nvalue: imb.peek(),\n});\n}\nlet payout = DelayedPayout {\nround_issuance: total_issuance,\ntotal_staking_reward: left_issuance,\ncollator_commission: <CollatorCommission<T>>::get(),\n};\n<DelayedPayouts<T>>::insert(round_to_payout, payout);\n}\npub(crate) fn pay_one_collator_reward(paid_for_round: RoundIndex, payout_info: DelayedPayout<BalanceOf<T>>, ) -> (Option<(T::AccountId, BalanceOf<T>)>, Weight) {\n// TODO: it would probably be optimal to roll Points into the DelayedPayouts storage\n// item so that we do fewer reads each block\nlet total_points = <Points<T>>::get(paid_for_round);\nif total_points.is_zero() {\n// TODO: this case is obnoxious... it's a value query, so it could mean one\n// of two different logic errors:\n// 1. we removed it before we should have\n// 2. we called pay_one_collator_reward when we were actually done with deferred payouts\nlog::warn!(\"pay_one_collator_reward called with no <Points<T>> for the round!\");\nreturn (None, 0u64.into());\n}\nlet mint = |amt: BalanceOf<T>, to: T::AccountId| {\nif let Ok(amount_transferred) = T::Currency::deposit_into_existing(&to, amt) {\nSelf::deposit_event(Event::Rewarded {\naccount: to.clone(),\nrewards: amount_transferred.peek(),\n});\n}\n};\nlet collator_fee = payout_info.collator_commission;\nlet collator_issuance = collator_fee * payout_info.round_issuance;\nif let Some((collator, pts)) = <AwardedPts<T>>::iter_prefix(paid_for_round).drain().next() {\nlet mut extra_weight = 0;\nlet pct_due = Perbill::from_rational(pts, total_points);\nlet total_paid = pct_due * payout_info.total_staking_reward;\nlet mut amt_due = total_paid;\n// Take the snapshot of block author and delegations\nlet state = <AtStake<T>>::take(paid_for_round, &collator);\nlet num_delegators = state.delegations.len();\nif state.delegations.is_empty() {\n// solo collator with no delegators\nmint(amt_due, collator.clone());\nextra_weight += T::OnCollatorPayout::on_collator_payout(paid_for_round, collator.clone(), amt_due, );\n} else {\n// pay collator first; commission + due_portion\nlet collator_pct = Perbill::from_rational(state.bond, state.total);\nlet commission = pct_due * collator_issuance;\namt_due = amt_due.saturating_sub(commission);\nlet collator_reward = (collator_pct * amt_due).saturating_add(commission);\nmint(collator_reward, collator.clone());\nextra_weight += T::OnCollatorPayout::on_collator_payout(paid_for_round, collator.clone(), collator_reward, );\n// pay delegators due portion\nfor Bond { owner, amount } in state.delegations {\nlet percent = Perbill::from_rational(amount, state.total);\nlet due = percent * amt_due;\nif !due.is_zero() {\nmint(due, owner.clone());\n}\n}\n}\n(Some((collator, total_paid)), T::WeightInfo::pay_one_collator_reward(num_delegators as u32) + extra_weight, )\n} else {\n// Note that we don't clean up storage here; it is cleaned up in handle_delayed_payouts()\n(None, 0u64.into())\n}\n}\nSolution\nIf the transfer fails, the transaction should be rolled back.\nStatus\nIgnored; The project party considers that it will be updated in subsequent versions.",
+      "description_summary": "Missing rollback logic for failed transfers in staking payouts."
+    },
+    {
+      "title": "Missing error message",
+      "repository": "https://github.com/OAK-Foundation/OAK-blockchain",
+      "audited_commit": "643342e936bbc821d2fb91be69872e4fcecd2273",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/parachain-staking/src/types.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Malicious Event Log",
+      "description": "[N6] [Suggestion] Missing error message\nCategory: Malicious Event Log Audit\nContent\npallets/parachain-staking/src/types.rs\nlet new_bottom_delegation = top_delegations.delegations.pop().expect(\"\"); missing error message.\npub fn add_top_delegation<T: Config>(&mut self, candidate: &T::AccountId, delegation: Bond<T::AccountId, BalanceOf<T>>) -> Option<Balance> where BalanceOf<T>: Into<Balance> + From<Balance>,\n{\nlet mut less_total_staked = None;\nlet mut top_delegations = <TopDelegations<T>>::get(candidate).expect(\"CandidateInfo existence => TopDelegations existence\");\nlet max_top_delegations_per_candidate = T::MaxTopDelegationsPerCandidate::get();\nif top_delegations.delegations.len() as u32 == max_top_delegations_per_candidate {\n// pop lowest top delegation\nlet new_bottom_delegation = top_delegations.delegations.pop().expect(\"\");\ntop_delegations.total = top_delegations.total.saturating_sub(new_bottom_delegation.amount);\nif matches!(self.bottom_capacity, CapacityStatus::Full) {\nless_total_staked = Some(self.lowest_bottom_delegation_amount);\n}\nself.add_bottom_delegation::<T>(true, candidate, new_bottom_delegation);\n}\n// insert into top\ntop_delegations.insert_sorted_greatest_to_least(delegation);\n// update candidate info\nself.reset_top_data::<T>(candidate.clone(), &top_delegations);\nif less_total_staked.is_none() {\n// only increment delegation count if we are not kicking a bottom delegation\nself.delegation_count = self.delegation_count.saturating_add(1u32);\n}\n<TopDelegations<T>>::insert(&candidate, top_delegations);\nless_total_staked\n}\nSolution\nRecord the corresponding error message.\nStatus\nIgnored; The project party considers that it will be updated in subsequent versions.",
+      "description_summary": "Missing error message in delegation handling, leaving potential issues unlogged."
+    }
+  ]
+}
