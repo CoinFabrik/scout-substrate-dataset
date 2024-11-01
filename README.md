@@ -68,8 +68,11 @@ To provide a common classification across the reviewed audits, we provide a `vul
 - **Denial of Service (DoS) and Spamming**: Vulnerabilities that could lead to potential denial of service or spamming, often tied to extrinsic calls or weights.  
   _Example Projects with Findings in this Class: [4-Pendulum], [10-Astar]_
 
-- **Business Logic and Implementation**: Flaws in higher-level business logic or project-specific implementations, which may lead to unexpected or exploitable system states.  
-  _Example Projects with Findings in this Class: [7-MantaNetwork], [5-Nodle]_
+- **Business Logic**: Issues in project-specific rules or logic, leading to exploitable or unintended behaviors.  
+  _Examples: [7-MantaNetwork], [5-Nodle]_
+
+- **Code Quality**: Issues impacting readability, maintainability, or structure, increasing risk of errors.  
+  _Examples: [7-MantaNetwork], [5-Nodle]_
 
 - **TBD**: Findings or issues with pending classification.
 
