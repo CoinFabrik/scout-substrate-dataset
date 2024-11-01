@@ -47,6 +47,34 @@ More projects will be added as new audits are analyzed.
 
 For access to the complete codebase associated with this dataset, including tagged archives for each audit finding and remediation, visit the [Scout Substrate Dataset Code](https://github.com/CoinFabrik/scout-substrate-dataset-code) repository. Download bundles by tag or commit hash, enabling a full historical view of each project version.
 
+## Substrate Issue Classes
+
+As we analyzed various audit reports and their respective findings, we observed a range of issue classes applied by auditing companies, each recorded under the field `vulnerability_class_audit` in the dataset. Despite some variation in classification, certain categories tend to recur.
+
+To provide a common classification across the reviewed audits, we provide a `vulnerability_class_scout` field for each finding. Below, we list several issue classes that we find applicable to **Substrate pallets**, **runtime**, and **node code**, and that we applied for this field.
+
+- **Dependency**: Issues related to using vulnerable or outdated dependencies in the project. These vulnerabilities could introduce potential risks due to unmaintained or insecure libraries.  
+  _Example Projects with Findings in this Class: [1-Parallel], [2-Parallel], [5-Nodle]_
+
+- **Arithmetic**: Arithmetic-related vulnerabilities, such as unchecked arithmetic operations, saturating calculations, and overflows. These issues can result in unexpected behaviors or crashes due to incorrect handling of mathematical operations.  
+  _Example Projects with Findings in this Class: [3-AvaProtocol], [6-ReefChain], [7-MantaNetwork]_
+
+- **Weight Management**: Incorrect or missing weight calculations, including static versus dynamic weight handling, or failure to account for changes in workload. This can lead to DoS vulnerabilities as resource costs are underestimated.  
+  _Example Projects with Findings in this Class: [7-MantaNetwork], [10-Astar], [4-Pendulum]_
+
+- **Error Handling and Validation**: Inadequate error handling and validation, such as improper use of `DispatchError`, missing error checks, and insufficient input validation. These issues can cause unexpected program flows and unauthorized access.  
+  _Example Projects with Findings in this Class: [5-Nodle], [4-Pendulum], [1-Parallel]_
+
+- **Denial of Service (DoS) and Spamming**: Vulnerabilities that could lead to potential denial of service or spamming, often tied to extrinsic calls or weights.  
+  _Example Projects with Findings in this Class: [4-Pendulum], [10-Astar]_
+
+- **Business Logic and Implementation**: Flaws in higher-level business logic or project-specific implementations, which may lead to unexpected or exploitable system states.  
+  _Example Projects with Findings in this Class: [7-MantaNetwork], [5-Nodle]_
+
+- **TBD**: Findings or issues with pending classification.
+
+We understand that this classification depends largely on expert criteria and that a finding could potentially be assigned to multiple classes simultaneously. We plan to further refine this classification as we add more audited projects to the dataset.
+
 ## About CoinFabrik
 
 We - [CoinFabrik](https://www.coinfabrik.com/) - are a research and development company specialized in Web3, with a strong background in cybersecurity. Founded in 2014, we have worked on over 500 blockchain-related projects, EVM-based and also for Solana, Algorand, and Polkadot. Beyond development, we offer security audits through a dedicated in-house team of senior cybersecurity professionals, currently working on code in Substrate, Solidity, Clarity, Rust, and TEAL.
