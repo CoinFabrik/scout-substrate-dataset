@@ -1,0 +1,44 @@
+{
+  "audited_project_id": 10,
+  "project_name": "Astar",
+  "auditor": "Security Research Labs",
+  "audit_link": "https://github.com/polkadot-assurance-legion/pal-docs/blob/main/audits/24h1/astar-srl-2403.pdf",
+  "findings": [
+    {
+      "title": "Missing benchmarking for the lockdrop precompile dispatch",
+      "repository": "https://github.com/AstarNetwork/Astar",
+      "audited_commit": "282485aa2d50f12f42463bba1d393fce4c57c2a3",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "precompiles/dispatch-lockdrop/src/lib.rs",
+          "lines": [{ "from": 88, "to": 90 }]
+        }
+      ],
+      "reported_impact": "Info",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "description": "3.2.1 Missing benchmarking for the lockdrop precompile dispatch\nAttack scenario\nLocation\nTracking\nAttack impact\nSeverity\nStatus\nStatic ref_time used for weight calculation leading to underestimation\nof the weights can enable an attacker to perform denial of service\nprecompiles/dispatch-lockdrop\n[2]\nAn attacker may spam and conduct denial of service attacks cheaply in\ncomparison to the actual weight_to_gas price\nInfo\nClosed [4]\nThe precompile dispatch-lockdrop has un-benchmarked weight_to_gas estimation with\nref_time configured to 1_000_000_000 [5].\n// Record a fixed amount of weight to ensure there is no free execution\nhandle.record_cost(Runtime::GasWeightMapping::weight_to_gas(\n    Weight::from_parts(1_000_000_000u64, 0),\n))?;\nThis estimation doesn’t reflect the actual runtime environment and can aid an attacker to spam\nthe chain.\nWe suggest to appropriately benchmark the precompile dispatch to reflect the accurate\nweight_to_gas estimation for ref_time and POV_size.\nThe issue was acknowledged by the Astar team and remediation is currently in progress\nthrough collaboration with the Frontier team [6]",
+      "description_summary": "Underestimated weight_to_gas estimation due to missing benchmarking allows attackers to perform denial of service attacks."
+    },
+    {
+      "title": "Unbounded call length limit in lockdrop dispatch call",
+      "repository": "https://github.com/AstarNetwork/Astar",
+      "audited_commit": "282485aa2d50f12f42463bba1d393fce4c57c2a3",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "precompiles/dispatch-lockdrop/src/lib.rs",
+          "lines": [74, 104]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "description": "3.2.2 Unbounded call length limit in lockdrop dispatch call\nAttack scenario\nLocation\nTracking\nAttack impact\nSeverity\nStatus\nAn attacker may create multiple nested calls bloating the call_length\nbefore call decoding\nprecompiles/dispatch-lockdrop\n[3]\nUnbounded call length can aid an attacker to cause heap overflow when\ncall data is moved to the vector\nLow\nClosed [7]\nThe precompile dispatch call uses the UnboundedBytes [8] type without any call_length being\nset for the call object parameter. During runtime-call decoding, a stack overflow is prevented\nthrough usage of DecodeLimit [9] however, a heap overflow might occur even before decoding\nif an unbounded call with large call_length is moved into the u8 vector.\nAn attacker can use this to create multiple nested calls bloating the call_length and cause heap\noverflow even before call decoding.\nWe recommend using BoundedBytes<call_length> instead of UnboundedBytes. A best practice\nimplementation from Moonbeam may be adopted for setting CallLengthLimit similar to\nGetProposalLimit [10] and implementing additional guard condition for call_length validity\nsimilar to proposal_length [11] before decoding the call for additional safety.",
+      "description_summary": "Unbounded call length in dispatch call allows attackers to cause heap overflow and perform denial of service attacks."
+    }
+  ]
+}
