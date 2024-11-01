@@ -1,4 +1,5 @@
 import json
+import pathlib as pl
 
 def findings():
     return (
@@ -31,5 +32,5 @@ def audit_dict():
         "findings": findings()
     }
 
-with open("findings-11-Astar.json", "w") as f:
+with open(pl.Path(__file__).parent / ".." / "audited-projects" / "11-Astar" / "findings-11-Astar.json", "w") as f:
     json.dump(audit_dict(), f, indent=2)
