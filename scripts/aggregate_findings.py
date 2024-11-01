@@ -18,10 +18,16 @@ def aggregate_findings(input_dir: Path, output_file: Path, descending: bool = Fa
                 if 'audited_project_id' not in data:
                     raise ValueError(f"Missing 'audited_project_id' in file {file_path}")
                 
-                # Remove specified fields from each finding if fields_to_exclude is provided
+                # Remove specified fields from the top level if needed
                 if fields_to_exclude:
                     for field in fields_to_exclude:
                         data.pop(field, None)
+                
+                # Remove specified fields from each entry in the "findings" list
+                if "findings" in data and fields_to_exclude:
+                    for finding in data["findings"]:
+                        for field in fields_to_exclude:
+                            finding.pop(field, None)
                 
                 findings_data.append(data)
     
