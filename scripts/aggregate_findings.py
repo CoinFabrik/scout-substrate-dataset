@@ -42,17 +42,8 @@ if __name__ == "__main__":
     # Define input and output paths relative to this script's location
     base_dir = Path(__file__).resolve().parent.parent  # Move up from 'utils' to root
     input_directory = base_dir / "audited-projects"
-    full_output_path = base_dir / "dataset" / "findings.json"        # Output for full version
-    mini_output_path = base_dir / "dataset" / "findings_mini.json"    # Output for mini version
-    
-    # Optionally, pass a list of specific files to aggregate
-    specific_files = None  # Replace with list of Paths if needed
-    
+    full_output_path = base_dir / "dataset" / "findings.json" 
+       
     # Run aggregation for full findings.json without exclusions
-    aggregate_findings(input_directory, full_output_path, files_to_aggregate=specific_files)
+    aggregate_findings(input_directory, full_output_path)
     print(f"Full aggregated findings saved to {full_output_path}")
-    
-    # Run aggregation for findings_mini.json excluding the "description" field
-    fields_to_exclude = ["description"]
-    aggregate_findings(input_directory, mini_output_path, files_to_aggregate=specific_files, fields_to_exclude=fields_to_exclude)
-    print(f"Mini aggregated findings saved to {mini_output_path}")
