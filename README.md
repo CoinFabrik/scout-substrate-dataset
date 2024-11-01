@@ -53,6 +53,8 @@ We - [CoinFabrik](https://www.coinfabrik.com/) - are a research and development 
 
 Our team has an academic background in computer science and mathematics, with work experience focused on cybersecurity and software development, including academic publications, patents turned into products, and conference presentations. Furthermore, we have an ongoing collaboration on knowledge transfer and open-source projects with the University of Buenos Aires.
 
+As proud members, and with the support of the [Polkadot Assurance Legion (PAL)](https://github.com/polkadot-assurance-legion/pal-docs), we are pleased to contribute this audited code dataset to the Substrate community, aiming to enhance vulnerability detection and promote security best practices within the Polkadot ecosystem.
+
 ## License
 
 Scout is licensed and distributed under a MIT license. [Contact us](https://www.coinfabrik.com/) if you're looking for an exception to the terms.
