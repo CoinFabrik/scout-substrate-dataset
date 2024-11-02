@@ -71,7 +71,7 @@
       "reported_likelihood": null,
       "cwe_classification": null,
       "vulnerability_class_audit": null,
-      "vulnerability_class_scout": "Business Logic and Implementation",
+      "vulnerability_class_scout": "Business Logic",
       "description": "5.4 Oracle price feed risk[weakness]\nDue to the lack of time parameter, if the price is not feed in time, the price may be inaccurate.\nparallel/pallets/prices/src/lib.rs\npub enum Event<T: Config> {\n/// Set emergency price. [currency_id, price_detail]\nSetPrice(CurrencyId, PriceWithDecimal),\n/// Reset emergency price. [currency_id]\nResetPrice(CurrencyId),\n}\nFeedback: At present, the source of price feeding is controlled by authority and credible. The range of trustworthiness includes the accuracy and real-time of the price, that is, outdated prices will not be sent to the chain, but the price feeding transaction sent is through operational on the chain. Transaction level guarantees will be packaged in real time, that is, the current block.",
       "description_summary": "Oracle price feed may be inaccurate due to lack of a time parameter."
     }
