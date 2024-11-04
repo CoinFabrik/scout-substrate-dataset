@@ -83,28 +83,28 @@
       "repository": "https://github.com/parallel-finance/parallel",
       "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
       "reported_remediated_commit": null,
-      "file_path": "pallets/liquid-staking/src/lib.rs",
+      "location": [
+        {
+          "file_path": "pallets/liquid-staking/src/lib.rs",
+          "lines": [{ "from": 1071, "to": 1159 }]
+        }
+      ],
       "reported_impact": "Low",
       "reported_likelihood": "Difficulty-High",
       "cwe_classification": null,
       "vulnerability_class_audit": "Data Validation",
-      "vulnerable_components": [
-        "notification_received",
-        "do_notification_received"
-      ],
-      "lines": [{ "from": 1071, "to": 1159 }],
       "description": "5. Failed XCM requests left in storage\nSeverity: Low\nDifficulty: High\nType: Data Validation\nFinding ID: TOB-PLF-5\nTarget: pallets/liquid-staking/src/lib.rs\nDescription\nWhen the liquid-staking pallet generates an XCM request for the parent chain, the corresponding XCM response triggers a call to Pallet::notification_received. If the response is of the Response::ExecutionResult type, this method calls Pallet::do_notification_received to handle the result.\nThe Pallet::do_notification_received method checks whether the request was successful and then updates the local state according to the corresponding XCM request, which is obtained from the XcmRequests storage map.\nfn do_notification_received(\nquery_id: QueryId,\nrequest: XcmRequest<T>,\nres: Option<(u32, XcmError)>,\n) -> DispatchResult {\nuse ArithmeticKind::*;\nuse XcmRequest::*;\nlet executed = res.is_none();\nif !executed {\nreturn Ok(());\n}\nmatch request {\nBond {\nindex: derivative_index,\namount,\n} => {\nensure!(\n!StakingLedgers::<T>::contains_key(&derivative_index),\nError::<T>::AlreadyBonded\n);\nlet staking_ledger =\n<StakingLedger<T::AccountId, BalanceOf<T>>>::new(\nSelf::derivative_sovereign_account_id(derivative_index),\namount,\n);\nStakingLedgers::<T>::insert(derivative_index, staking_ledger);\nMatchingPool::<T>::try_mutate(|p| -> DispatchResult {\np.update_total_stake_amount(amount, Subtraction)\n})?;\nT::Assets::burn_from(\nSelf::staking_currency()?,\n&Self::account_id(),\nAmount\n)?;\n}\n// ... <redacted>\n}\nXcmRequests::<T>::remove(&query_id);\nOk(())\n}\nFigure 5.1: pallets/liquid-staking/src/lib.rs:1071-1159\nIf the method completes without errors, the XCM request is removed from storage via a call to XcmRequests<T>::remove(query_id). However, if any of the following conditions are true, the corresponding XCM request is left in storage indefinitely:\n1. The request fails and Pallet::do_notification_received exits early.\n2. Pallet::do_notification_received fails.\n3. The response type is not Response::ExecutionResult.\nThese three cases are currently unhandled by the codebase. The same issue is present in the crowdloans pallet implementation of Pallet::do_notification_received.\nRecommendations\nShort term, ensure that failed XCM requests are handled correctly by the crowdloans and liquid-staking pallets.",
       "description_summary": "Failed XCM requests are left in storage indefinitely if not handled properly by the notification_received method."
     },
     {
-      "title": "Failed XCM requests left in storage",
+      "title": "Risk of using stale oracle prices in loans pallet",
       "repository": "https://github.com/parallel-finance/parallel",
       "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
       "reported_remediated_commit": null,
       "location": [
         {
-          "file_path": "pallets/liquid-staking/src/lib.rs",
-          "lines": [{ "from": 1071, "to": 1159 }]
+          "file_path": "pallets/loans/src/lib.rs",
+          "lines": [{ "from": 1430, "to": 1441 }]
         }
       ],
       "reported_impact": "Low",
@@ -158,13 +158,16 @@
       "repository": "https://github.com/parallel-finance/parallel",
       "audited_commit": "5ca8e13b7b4312855ae2ef1d39f14b38088dfdbd",
       "reported_remediated_commit": null,
-      "file_path": "pallets/crowdloans/src/lib.rs",
+      "location": [
+        {
+          "file_path": "pallets/crowdloans/src/lib.rs",
+          "lines": [{ "from": 502, "to": 594 }]
+        }
+      ],
       "reported_impact": "Informational",
       "reported_likelihood": "Difficulty-High",
       "cwe_classification": null,
       "vulnerability_class_audit": "Data Validation",
-      "vulnerable_components": ["contribute"],
-      "lines": [{ "from": 502, "to": 594 }],
       "description": "9. The referral code is a sequence of arbitrary bytes\nSeverity: Informational\nDifficulty: High\nType: Data Validation\nFinding ID: TOB-PLF-9\nTarget: pallets/crowdloans/src/lib.rs\nDescription\nThe referral code is used in a number of extrinsic calls in the crowdloans pallet. Because the referral code is never validated, it can be a sequence of arbitrary bytes. The referral code is logged by a number of extrinsics. However, it is currently impossible to perform log injection because the referral code is printed as a hexadecimal string rather than raw bytes (using the debug representation).\npub fn contribute(\norigin: OriginFor<T>,\ncrowdloan: ParaId,\n#[pallet::compact] amount: BalanceOf<T>,\nreferral_code: Vec<u8>,\n) -> DispatchResultWithPostInfo {\n// ... <redacted>\nlog::trace!(\ntarget: \"crowdloans::contribute\",\n\"who: {:?}, para_id: {:?}, amount: {:?}, referral_code: {:?}\",\n&who,\n&crowdloan,\n&amount,\n&referral_code\n);\nOk(().into())\n}\nFigure 9.1: pallets/crowdloans/src/lib.rs:502-594\nExploit Scenario\nThe referral code is rendered as raw bytes in a vulnerable environment, introducing an opportunity to perform a log injection attack.\nRecommendations\nShort term, choose and implement a data type that models the referral code semantics as closely as possible.",
       "description_summary": "The referral code in the crowdloans pallet is arbitrary and unvalidated, potentially allowing log injection attacks."
     },
