@@ -260,12 +260,7 @@
       "repository": "https://github.com/Manta-Network/Manta",
       "audited_commit": "45ba60e1d940dbf3491ce0f1223e44c84d5b7218",
       "reported_remediated_commit": null,
-      "location": [
-        {
-          "file_path": null,
-          "lines": null
-        }
-      ],
+      "location": null,
       "reported_impact": "Low",
       "reported_likelihood": null,
       "cwe_classification": null,
