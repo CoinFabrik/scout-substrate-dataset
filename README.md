@@ -16,6 +16,7 @@ We have structured the `Scout Substrate Dataset` into the following folders:
 
 - **`/dataset/`**:
   - **`findings.json`**: A comprehensive list of all findings across the audited projects.
+  - **`findings-linear.json`**: The `findings.json` file further processed to be imported in hugging face.
 - **`/audited-projects/`**:
   - Contains directories for each audited project, labeled by `[audited-project-id]-[project-name]`.
   - Each directory contains:
