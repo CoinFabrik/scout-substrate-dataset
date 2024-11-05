@@ -1,0 +1,108 @@
+{
+  "audited_project_id": 8,
+  "project_name": "MantaNetwork",
+  "auditor": "Halborn",
+  "audit_link": "https://github.com/Manta-Network/Atlantic-Audits/blob/main/Atlantic-Halborn-zkSBT.pdf",
+  "findings": [
+    {
+      "title": "Loss of Reserved SBT IDs",
+      "repository": "https://github.com/Manta-Network/Manta",
+      "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/manta-sbt/src/lib.rs",
+          "lines": [376]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "4.1 (HAL-01) LOSS OF RESERVED SBT IDS - LOW (2.5)\\nDescription:\\nCode Location:\\nThe reserve_sbt function calculates a range of IDs and stores this range in the ReservedIds storage map, using the caller’s address as the key. It was identified that users lose their reserved SBT IDs when they call the reserve_sbt function without first minting their previously reserved SBT IDs. This occurs because the previous reserved range is overwritten.\\nBody of the reserve_sbt function:\\nListing 1: pallets/manta-sbt/src/lib.rs (Line 376)\\n368 let asset_id_range : Vec < StandardAssetId > = (0.. T :: MintsPerReserve :: get () )\\n369 . map (| _ | Self :: next_sbt_id_and_increment () )\\n370 . collect :: < Result < Vec < StandardAssetId > , _ > >() ?;\\n\\n372 // The range of ` AssetIds ` that are reserved as SBTs\\n373 let start_id : StandardAssetId = * asset_id_range . first () . ok_or ( Error :: <T >:: ZeroMints ) ?;\\n374 let stop_id : StandardAssetId = * asset_id_range . last () . ok_or ( Error :: <T >:: ZeroMints ) ?;\\n375 ReservedIds :: <T >:: insert (& who , ( start_id , stop_id ) ) ;\\nBVSS:\\nAO:A/AC:L/AX:L/C:N/I:N/A:N/D:L/Y:N/R:N/S:U (2.5)\\nProof Of Concept:\\nThis test reserves ids two times and mints one zkSBT. The first zkSBT token will not have the id 1, it will have the id 6 instead.\\nListing 2: pallets/manta-sbt/src/tests.rs\\n1 #[ test ]\\n2 fn hal01 () {\\n3 let mut rng = OsRng ;\\n4 new_test_ext () . execute_with (|| {\\n5 assert_ok! ( Balances :: set_balance (\\n6 MockOrigin :: root () ,\\n7 ALICE ,\\n8 1 _000_000_000_000_000 ,\\n9 0\\n10 )) ;\\n11 // Reserve IDs from 1 to 5\\n12 assert_ok! ( MantaSBTPallet :: reserve_sbt ( MockOrigin :: signed ( ALICE ) ) ) ;\\n13 // Reserve IDs from 6 to 10\\n14 assert_ok! ( MantaSBTPallet :: reserve_sbt ( MockOrigin :: signed ( ALICE ) ) ) ;\\n15\\n16 let value = 1;\\n17 let id = field_from_id ( ReservedIds :: < Test >:: get ( ALICE ) . unwrap () .0) ;\\n18 let post = sample_to_private ( id , value , & mut rng ) ;\\n19 assert_ok! ( MantaSBTPallet :: to_private (\\n20 MockOrigin :: signed ( ALICE ) ,\\n21 Box :: new ( post ) ,\\n22 bvec! [0]\\n23 )) ;\\n\\n25 // The first zkSBT minted has the id 6.\\n26 assert_eq! (\\n27 SbtMetadata :: < Test >:: get (6) . unwrap () . extra ,\\n28 Some ( bvec! [0])\\n29 );\\n30 });\\n31 }\\nRecommendation:\\nTo resolve this issue, it is recommended to restrict users from reserving additional SBT IDs if they have not minted their previously reserved IDs.",
+      "description_summary": "Users lose previously reserved SBT IDs if they reserve new ones without minting the old."
+    },
+    {
+      "title": "Last SBT IDs Cannot Be Reserved",
+      "repository": "https://github.com/Manta-Network/Manta",
+      "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/manta-sbt/src/lib.rs",
+          "lines": [369, 883]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "4.2 (HAL-02) LAST SBT IDS CANNOT BE RESERVED - LOW (2.5)\\nDescription:\\nWhen users invoke the reserve_sbt function, it reserves a specific number of IDs - quantified by MintPerReserve. The reserve_sbt function achieves this by repeatedly calling the next_sbt_id_and_increment function - as many times as the MintPerReserve value. This next_sbt_id_and_increment function serves to return the next available ID and concurrently increment the NextSbtId storage value by 1.\\nA potential problem arises if the incrementing process results in an overflow, causing the next_sbt_id_and_increment function to throw an overflow exception, which in turn fails the ongoing transaction. In this scenario, previously identified IDs that did not contribute to the overflow situation remain unreserved. This issue presents a concern as it could potentially lead to resource allocation inefficiencies and transaction failures.\\nCode Location:\\nBody of the reserve_sbt function, where the next zkSBT id is incremented.\\nListing 3: pallets/manta-sbt/src/lib.rs (Line 369)\\n356 pub fn reserve_sbt ( origin : OriginFor <T >) -> DispatchResult {\\nlet who = ensure_signed ( origin ) ?;\\n// Charges fee to reserve AssetIds\\n<T as pallet :: Config >:: Currency :: transfer (\\n& who ,\\n& Self :: account_id () ,\\nT :: ReservePrice :: get () ,\\nExistenceRequirement :: KeepAlive ,\\n) ?;\\n// Reserves uniques AssetIds to be used later to mint SBTs\\n368 let asset_id_range : Vec < StandardAssetId > = (0.. T :: MintsPerReserve :: get () )\\n369 . map (| _ | Self :: next_sbt_id_and_increment () )\\n370 . collect :: < Result < Vec < StandardAssetId > , _ > >() ?;\\nnext_sbt_id_and_increment function will overflow if the max number for u128 is surpassed\\nListing 4: pallets/manta-sbt/src/lib.rs (Line 883)\\n875 fn next_sbt_id_and_increment () -> Result < StandardAssetId , DispatchError > {\\n876 NextSbtId :: <T >:: try_mutate (| maybe_val | {\\n877 match maybe_val {\\n878 Some ( current ) = > {\\n879 let id = * current ;\\n880 * maybe_val = Some (\\n881 current\\n882 . checked_add ( One :: one () )\\n883 . ok_or ( ArithmeticError :: Overflow )? ,\\n884 );\\n885 Ok ( id )\\n886 }\\n887 // If storage is empty , starts at value of one ( Field cannot be zero )\\n888 None = > {\\n889 * maybe_val = Some (2) ;\\n890 Ok ( One :: one () )\\n891 }\\n892 }\\n893 })\\n894 }\\nBVSS:\\nAO:A/AC:L/AX:L/C:N/I:N/A:L/D:N/Y:N/R:N/S:U (2.5)\\nProof Of Concept:\\nNote: For this Proof of Concept (PoC), the codebase was modified such that the zkSBT IDs are now u8 instead of u128. This alteration reduces the time needed to demonstrate that the function fails in this edge-case scenario.\\nListing 5: pallets/manta-sbt/src/tests.rs\\n236 #[ test ]\\n237 fn hal02 () {\\n238 new_test_ext () . execute_with (|| {\\n239 assert_ok! ( Balances :: set_balance (\\n240 MockOrigin :: root () ,\\n241 ALICE ,\\n242 1 _000_000_000_000_000 ,\\n243 0\\n244 )) ;\\n245 for i in (1..51) {\\n246 assert_ok! ( MantaSBTPallet :: reserve_sbt_bis ( MockOrigin :: signed ( ALICE )) );\\n247 println! (\" First id : {} - Last id : {} \" , ReservedIdsBis :: < Test >:: get ( ALICE ) . unwrap () .0 , ReservedIdsBis :: < Test >:: get ( ALICE ) . unwrap () .1) ;\\n248 }\\n250 assert_noop! ( MantaSBTPallet :: reserve_sbt_bis ( MockOrigin :: signed ( ALICE )) , ArithmeticError :: Overflow );\\n251 });\\n252 }\\nIn this test, we reserve all available IDs, excluding the last five. Attempting to reserve the last ID will cause the StandardAssetId value to overflow, resulting in a failure.\\nRecommendation:\\nTo address this issue, it is recommended to implement a check to determine whether the value of the StandardAssetId has reached the maximum value for u128 can prevent overflow. This measure will stop the occurrence of an exception.",
+      "description_summary": "Overflow in next_sbt_id_and_increment causes unreserved IDs and transaction failure."
+    },
+    {
+      "title": "Downcasting of 64-Bit Integer",
+      "repository": "https://github.com/Manta-Network/Manta",
+      "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/manta-sbt/src/lib.rs",
+          "lines": [783]
+        },
+        {
+          "file_path": "pallets/manta-support/src/manta_pay.rs",
+          "lines": [874, 1095, 1096]
+        },
+        {
+          "file_path": "runtime/calamari/src/migrations/staking.rs",
+          "lines": [70]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Arithmetic",
+      "description": "4.3 (HAL-03) DOWNCASTING OF 64-BIT INTEGER - LOW (2.5)\\nDescription:\\nIt was observed that in certain circumstances, usize values are cast to types such as u8 and u32. The usize data type in the Rust programming language represents a pointer-sized unsigned integer. The actual size of usize is dependent on the platform: it’s 32 bits on a 32-bit platform and 64 bits on a 64-bit platform. Consequently, depending on the system, there could be a cast from an u64 to an u32. This implies that an attempt could be made to store a value larger than the maximum value that can be held in an u32, leading to unexpected consequences.\\nCode Location:\\nFINDINGS & TECH DETAILS\\nUsize is casted to u8:\\nListing 6: pallets/manta-sbt/src/lib.rs (Line 783)\\n768 fn pull_receivers (\\n769 receiver_indices : [ usize ; MerkleTreeConfiguration :: FOREST_WIDTH ],\\n770 max_update_request : u64 ,\\n771 ) -> ( bool , ReceiverChunk ) {\\n772 let mut more_receivers = false ;\\n773 let mut receivers = Vec :: new () ;\\n774 let mut receivers_pulled : u64 = 0;\\n775 let max_update = if max_update_request > Self :: PULL_MAX_RECEIVER_UPDATE_SIZE {\\n776 Self :: PULL_MAX_RECEIVER_UPDATE_SIZE\\n777 } else {\\n778 max_update_request\\n779 };\\n781 for ( shard_index , utxo_index ) in receiver_indices . into_iter () . enumerate () {\\n782 more_receivers |= Self :: pull_receivers_for_shard (\\n783 shard_index as u8 ,\\n784 utxo_index ,\\n785 max_update ,\\n786 & mut receivers ,\\n787 & mut receivers_pulled ,\\n788 );\\n790 if receivers_pulled == max_update && more_receivers {\\n791 break ;\\n792 }\\n794 ( more_receivers , receivers )\\n795 }\\nUsize is casted to u32:\\nListing 7: pallets/manta-support/src/manta_pay.rs (Line 860)\\n867 impl TryFrom < merkle_tree :: CurrentPath < MerkleTreeConfiguration > > for CurrentPath {\\n868 type Error = Error ;\\n871 fn try_from ( path : merkle_tree :: CurrentPath < MerkleTreeConfiguration >) -> Result < Self , Error > {\\n872 Ok ( Self {\\n873 sibling_digest : fp_encode ( path . sibling_digest )? ,\\n874 leaf_index : path . inner_path . leaf_index .0 as u32 ,\\n875 inner_path : path . inner_path . path . into_iter () . map ( fp_encode ) . collect :: < Result <_ , _ > >() ? ,\\n881 })\\n883 }\\nListing 8: pallets/manta-support/src/manta_pay.rs (Lines 1095,1096)\\n1091 impl From < RawCheckpoint > for Checkpoint {\\n1094 Self :: new ( checkpoint . receiver_index . map (| i| i as usize ) . into () , checkpoint . sender_index as usize ,)\\nListing 9: runtime/calamari/src/migrations/staking.rs (Line 70)\\n70 let n_of_candidates = manta_collator_selection :: Pallet :: <T >:: candidates () . len () as u32 ;\\nRecommendation:\\nTo address this issue, it is recommended to check the value against the maximum value before casting.",
+      "description_summary": "Casting usize to smaller types may cause data loss and unexpected behavior."
+    },
+    {
+      "title": "Unchecked Math Could Impact Weight Calculation",
+      "repository": "https://github.com/Manta-Network/Manta",
+      "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "runtime/calamari/src/fee.rs",
+          "lines": [76]
+        },
+        {
+          "file_path": "primitives/manta/src/xcm.rs",
+          "lines": [183, 251, 252]
+        },
+        {
+          "file_path": "runtime/manta/src/fee.rs",
+          "lines": [47, 52]
+        },
+        {
+          "file_path": "runtime/common/src/lib.rs",
+          "lines": [115]
+        },
+        {
+          "file_path": "primitives/manta/src/constants.rs",
+          "lines": [110]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Weight Management",
+      "description": "4.4 (HAL-04) UNCHECKED MATH COULD IMPACT WEIGHT CALCULATION - LOW (2.5)\\nDescription:\\nIt was identified that several areas in the buy_weight and the refund_weight functions that could potentially benefit from enhanced computational checks. Currently, despite numerous instances of proven arithmetic calculations, the function does not have a mechanism to handle situations where underflow or overflow states might occur.\\nWhile these states haven’t been identified as potential risks for exploitation, implementing additional safeguards to account for them will be beneficial.\\nAnother point of consideration pertains to the WEIGHT_PER_SECOND value. This value serves as a divisor in computing the number of tokens required for payment or refund during the weight purchasing procedure. While it is predetermined as a constant during the system’s compilation, it currently lacks a constraint to assure that it never equals zero. This is a significant potential risk as it could result in a system panic if the value happens to be zero, causing a division by zero error. Moreover, as the WEIGHT_PER_SECOND value is also used in calculations elsewhere in the system, this issue could potentially affect other sections of the codebase as well.\\nCode Location:\\nUnsafe multiplication in the tests multiplier_growth_simulator_and_congestion_budget_test:\\nListing 10: runtime/calamari/src/fee.rs (Line 76)\\n69 #[ test ]\\n#[ ignore ] // This test should not fail CI\\n71 fn multiplier_growth_simulator_and_congestion_budget_test () {\\n72 let target_daily_congestion_cost_usd = 100 _000 ;\\n73 let kma_price = fetch_kma_price () . unwrap () ;\\n74 println! (\" KMA / USD price as read from CoinGecko = { kma_price } \") ;\\n75 let target_daily_congestion_cost_kma =\\n76 ( target_daily_congestion_cost_usd as f32 / kma_price * KMA as f32 ) as u128 ;\\nUnsafe multiplication in buy_weight function\\nListing 11: primitives/manta/src/xcm.rs (Line 183)\\n146 fn buy_weight (& mut self , weight : Weight , payment : Assets ) -> Result < Assets > {\\n153 let first_asset = payment . fungible_assets_iter () . next () . ok_or ({\\n160 XcmError :: TooExpensive }) ?;\\n183 let amount = units_per_second * ( weight as u128 ) / ( WEIGHT_PER_SECOND as u128 ) ;\\nUnsafe subtraction in refund_weight function\\nListing 12: primitives/manta/src/xcm.rs (Line 251)\\n248 fn refund_weight (& mut self , weight : Weight ) -> Option < MultiAsset > {\\n251 self . weight -= weight ;\\n252 let amount = * units_per_second * ( weight as u128 ) / ( WEIGHT_PER_SECOND as u128 ) ;\\nPlaces where WEIGHT_PER_SECOND is used as a divisor:\\n• Function refund_weight\\nListing 13: primitives/manta/src/xcm.rs (Line 252)\\n• Function buy_weight:\\nListing 14: primitives/manta/src/xcm.rs (Line 183)\\nThe following snippets show how the q divisor is calculated and how it’s equal to zero if WEIGHT_PER_SECOND is zero too.\\nListing 15: runtime/manta/src/fee.rs (Lines 47,52)\\nRecommendation:\\nWe recommend a review of these identified areas to ensure that adequate arithmetic checks are in place and a safety constraint is set for WEIGHT_PER_SECOND to prevent it from reaching zero. These improvements will further fortify the system, ensuring stability, reliability, and secure operation.\\n• It is recommended to add a constraint to ensure that WEIGHT_PER_SECOND is never 0.\\n• In “release” mode, Rust does not panic! due to overflows and overflowed values simply “wrap” without any explicit feedback to the user. It is recommended to use vetted safe math libraries for arithmetic operations consistently throughout the smart contract system. Consider replacing the multiplication operator with Rust’s checked_mul method, the subtraction operator with Rust’s checked_subs method, and so on.",
+      "description_summary": "Unchecked math in weight calculations may lead to overflow, underflow, or division by zero errors."
+    }
+  ]
+}

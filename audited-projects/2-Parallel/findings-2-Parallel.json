@@ -1,0 +1,79 @@
+{
+  "audited_project_id": 2,
+  "project_name": "Parallel",
+  "auditor": "Slow Mist",
+  "audit_link": "https://github.com/parallel-finance/auditing-report/blob/main/Slow%20Mist%20-%20Parallel%20Security%20Audit%20Report.pdf",
+  "findings": [
+    {
+      "title": "Need to upgrade the module",
+      "repository": "https://github.com/parallel-finance/parallel",
+      "audited_commit": "a223cd7910af3540048b58f958fea5b784876468",
+      "reported_remediated_commit": "fc6d8042ba51719e0f1bca40631e4649a6100510",
+      "location": null,
+      "reported_impact": "low-risk",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Dependency",
+      "description": "5.1 Need to upgrade the module [low-risk]\nID:RUSTSEC-2021-0067\nCrate:cranelift-codegen\nVersion: 0.71.0\nDate:2021-05-21\nURL:https://rustsec.org/advisories/RUSTSEC-2021-0067\nTitle: Memory access due to code generation flaw in Cranelift module\nSolution: upgrade to >= 0.73.1 OR >= 0.74\nDependency tree: cranelift-codegen 0.71.0\nFixed in: https://github.com/parallel-finance/parallel/pull/210",
+      "description_summary": "Memory access vulnerability in Cranelift module due to code generation flaw, fixed by upgrading to >= 0.73.1 or >= 0.74."
+    },
+    {
+      "title": "Numeric overflow",
+      "repository": "https://github.com/parallel-finance/parallel",
+      "audited_commit": "a223cd7910af3540048b58f958fea5b784876468",
+      "reported_remediated_commit": "386b0e7e1eea19c143900d4127daa8c475266dad",
+      "location": [
+        {
+          "file_path": "parallel/pallets/loans/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "enhancement",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Arithmetic",
+      "description": "5.2 Numeric overflow[enhancement]\nparallel/pallets/loans/src/lib.rs\nlet total_reserves_new = total_reserves - reduce_amount;\n//...snip code...//\nlet total_reserves_new = total_reserves + add_amount;\nIt is recommended to use `checked_add/checked_sub` to prevent numerical overflow.\nFixed in: https://github.com/parallel-finance/parallel/pull/241",
+      "description_summary": "Numeric overflow vulnerability due to lack of checked_add/checked_sub, fixed by adding these methods."
+    },
+    {
+      "title": "Lack of bounds checking",
+      "repository": "https://github.com/parallel-finance/parallel",
+      "audited_commit": "a223cd7910af3540048b58f958fea5b784876468",
+      "reported_remediated_commit": "2bb80a4e75416e27a03ffb9f8d3100aca548d8b2",
+      "location": [
+        {
+          "file_path": "parallel/pallets/loans/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "weakness",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "5.3 Lack of bounds checking[weakness]\n`mint_amount` has no boundary limit, it is recommended to enhance.\nFixed in: https://github.com/parallel-finance/parallel/pull/258",
+      "description_summary": "Lack of bounds checking for mint_amount, recommended to enhance."
+    },
+    {
+      "title": "Oracle price feed risk",
+      "repository": "https://github.com/parallel-finance/parallel",
+      "audited_commit": "a223cd7910af3540048b58f958fea5b784876468",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "parallel/pallets/prices/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "weakness",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "5.4 Oracle price feed risk[weakness]\nDue to the lack of time parameter, if the price is not feed in time, the price may be inaccurate.\nparallel/pallets/prices/src/lib.rs\npub enum Event<T: Config> {\n/// Set emergency price. [currency_id, price_detail]\nSetPrice(CurrencyId, PriceWithDecimal),\n/// Reset emergency price. [currency_id]\nResetPrice(CurrencyId),\n}\nFeedback: At present, the source of price feeding is controlled by authority and credible. The range of trustworthiness includes the accuracy and real-time of the price, that is, outdated prices will not be sent to the chain, but the price feeding transaction sent is through operational on the chain. Transaction level guarantees will be packaged in real time, that is, the current block.",
+      "description_summary": "Oracle price feed may be inaccurate due to lack of a time parameter."
+    }
+  ]
+}

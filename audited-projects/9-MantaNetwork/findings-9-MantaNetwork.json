@@ -1,0 +1,122 @@
+{
+  "audited_project_id": 9,
+  "project_name": "MantaNetwork",
+  "auditor": "Veridise",
+  "audit_link": "https://github.com/Manta-Network/Atlantic-Audits/blob/main/Atlantic-Veridise-zkSBT.pdf",
+  "findings": [
+    {
+      "title": "SBT reservations can be overwritten",
+      "repository": "https://github.com/Manta-Network/Manta",
+      "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+      "reported_remediated_commit": "be7f1c7a8b7d35a84f657854032b2bf3b7e01ab8",
+      "location": [
+        {
+          "file_path": "pallets/manta-sbt/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Logic Error",
+      "vulnerability_class_scout": "Business Logic",
+      "description": "4.1 Detailed Description of Issues\n\nV-MSBT-VUL-001: SBT reservations can be overwritten\n\nSeverity: Medium\nType: Logic Error\nCommit: ceb9e46\nStatus: Fixed\nFile(s): pallets/manta-sbt/src/lib.rs\nLocation(s): reserve_sbt\n\nThe manta-sbt pallet exposes a method reserve_sbt whereby callers pay MANTA tokens to reserve the right to mint N SBTs. This reservation is enforced by allocating reservation ids to the caller of the method so that when users mint an SBT, Manta Chain uses one of the reserved ids to track the number reserved. In particular, Manta Chain maintains a map called ReservedIds which maps users to an interval of reservation ids such that the length of the interval indicates the number of SBTs they can mint.\n\nHowever, reserve_sbt does not check whether a user has already reserved SBTs to mint when calling the method and simply updates the mapping to a new interval of length N. This can be seen in the method implementation below:\n\n/// Reserves AssetIds to be used subsequently in 'to_private' above.\n\n/// Increments AssetManager’s AssetId counter.\n\n#[pallet::call_index(1)]\n#[pallet::weight(<T as pallet::Config>::WeightInfo::reserve_sbt())]\n#[transactional]\npub fn reserve_sbt(origin: OriginFor<T>) -> DispatchResult {\n  let who = ensure_signed(origin)?;\n\n  // Charges fee to reserve AssetIds\n  <T as pallet::Config>::Currency::transfer(\n    &who,\n    &Self::account_id(),\n    T::ReservePrice::get(),\n    ExistenceRequirement::KeepAlive,\n  )?;\n\n  // Reserves unique AssetIds to be used later to mint SBTs\n  let asset_id_range: Vec<StandardAssetId> = (0..T::MintsPerReserve::get())\n    .map(|_| Self::next_sbt_id_and_increment())\n    .collect::<Result<Vec<StandardAssetId>, _>>()?;\n\n  // The range of 'AssetIds' that are reserved as SBTs\n  let start_id: StandardAssetId = *asset_id_range.first().ok_or(Error::<T>::ZeroMints)?;\n  let stop_id: StandardAssetId = *asset_id_range.last().ok_or(Error::<T>::ZeroMints)?;\n\n  ReservedIds::<T>::insert(&who, (start_id, stop_id));\n  Self::deposit_event(Event::<T>::SBTReserved { who, start_id, stop_id });\n  Ok(())\n}\n\nThus, if a user calls the method M times to reserve M*N SBTs, then they will only be able to mint N.\n\nImpact: Users can lose money because they may think they have reserved M*N SBTs when they in fact can only mint N. Furthermore, if a user calls reserve_sbt M times in a row, then M*(N-1) SBTs can no longer be minted. This is due to the fact that reserved ids are always incremented.\n\nFor example, suppose someone sets up a relayer account which users could use to purchase zkSBTs for themselves without being linked to the transaction. That relayer account would only receive SBTs on its last call reserve_sbt. Implementations in which the relayer reserves and sends the SBTs separately may be error-prone.\n\nRecommendation: If at most N SBTs can be reserved at a time for a user, then reserve_sbt should check whether a user has already reserved SBTs. If the protocol permits more than N SBTs to be reserved at a time for a user, then the mapping should be changed. One option might be to map each user to a set of intervals corresponding to ids reserved for them.\n\nDeveloper Response: The developers have acknowledged the issue and a fix has been proposed in this pull request. The fix changes the function to revert if the user has SBT ids already reserved.",
+      "description_summary": "SBT reservations can be overwritten, causing users to lose reserved tokens."
+    },
+    {
+      "title": "Extrinsics charge static fees that do not account for Merkle tree updates",
+      "repository": "https://github.com/Manta-Network/Manta",
+      "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+      "reported_remediated_commit": "f0ed5957c3bc87b4a4a2631f26aceefb9607f069",
+      "location": [
+        {
+          "file_path": "pallets/manta-sbt/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Bad Extrinsic Weight",
+      "vulnerability_class_scout": "Weight Management",
+      "description": "4.1.2 V-MSBT-VUL-002: Extrinsics charge static fees that do not account for Merkle tree updates\n\nSeverity: Low\nType: Bad Extrinsic Weight\nCommit: ceb9e46\nStatus: Fixed\nFile(s): pallets/manta-sbt/src/lib.rs\nLocation(s): to_private, mint_sbt_eth\n\nTransactions to_private and mint_sbt_eth take membership proofs and store UTXOs to a Merkle tree on the ledger. manta-sbt shards this Merkle tree into 256 buckets where each bucket has its own Merkle tree. Instead of storing the entire tree at each bucket, the Ledger just stores the last path added to the tree. When adding a UTXO, the Ledger first computes its corresponding bucket, then computes the new path pointing to that UTXO, and finally adds that path to the bucket.\n\nComputing the new path should take time proportional to log(n) where n is the size of the Merkle Tree. The current benchmarking scheme only covers cases where the previous path is small i.e, at most size 1. However, if the number of transactions gets large i.e, is on the order of hundreds of millions or billions, then the size of the path can get to 24-28 (taking shards into account). If the tree grows to this size, this means each execution of the extrinsic will perform 24-28 hashes, multiplied by the number of UTXOs to be added.\n\nThe benchmarking scheme should take into account the size of the tree to make sure that the existing weights are enough to offset the computation of the new Merkle tree path.\n\nImpact: In general, it is important to set the weights to account for both computation and storage; setting the weight too low can allow users to perform a large number of transactions with little cost. In particular, malicious users may take advantage of the low fee to launch a DOS attack.\n\nRecommendation: We recommend that the weights be computed with a larger database that reflects the state of the chain after a year’s worth of use.\n\nDeveloper Response: In progress open PR for manta-pay right now that will be extended to pallet SBT. The manta-pay PR can be found here.",
+      "description_summary": "Static fees for extrinsics do not account for Merkle tree updates, risking underpriced transactions."
+    },
+    {
+      "title": "Missing validation in pull_ledger_diff",
+      "repository": "https://github.com/Manta-Network/Manta",
+      "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/manta-sbt/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Warning",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Data Validation",
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "4.1.3 V-MSBT-VUL-003: Missing validation in pull_ledger_diff\n\nSeverity: Warning\nType: Data Validation\nCommit: ceb9e46\nStatus: Acknowledged\nFile(s): pallets/manta-sbt/src/lib.rs\nLocation(s): pull_ledger_diff\n\npull_ledger_diff takes as input a Checkpoint which is a struct of two fields receiver_index and sender_index and pulls receiver data from the ledger starting at receiver_index up till at most receiver_index + PULL_MAX_RECEIVER_UPDATE_SIZE. However, there is no check that this sum cannot overflow for both the sender and receiver index in pull_receivers and pull_receivers_for_shard.\n\nImpact: If the code is compiled without the --release flag then a malicious user could crash the node by passing in bad values. If it is built with --release then the call will be reported as successful and no senders or receivers will be returned. However, if a benign end user is calling the API with incorrect indexes it might be better to return an error informing them that the index is invalid.\n\nRecommendation: We recommend adding bounds checks to be safe and to return an Error.\n\nDeveloper Response: The developers acknowledged the issue and will fix this prior to release.",
+      "description_summary": "Missing bounds check in pull_ledger_diff could allow overflow and node crash."
+    },
+    {
+      "title": "Off-by-one error in to_private",
+      "repository": "https://github.com/Manta-Network/Manta",
+      "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/manta-sbt/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Warning",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Logic Error",
+      "vulnerability_class_scout": "Arithmetic",
+      "description": "4.1.4 V-MSBT-VUL-004: Off-by-one error in to_private\n\nSeverity: Warning\nType: Logic Error\nCommit: ceb9e46\nStatus: Acknowledged\nFile(s): pallets/manta-sbt/src/lib.rs\nLocation(s): to_private\n\nThe manta-sbt pallet has a user-callable extrinsic, to_private, which allows users to mint reserved SBT tokens. To facilitate minting tokens, the pallet maintains a mapping from users to an interval [l, u] where l ≤ u and l and u refer to minimum and maximum asset ids that can be minted by the user. The function does two things. First, it mints an asset with id l and then updates the interval to [l + 1, u]. If l + 1 > u, it removes the user from the map since this indicates they don’t have any more user ids to reserve.\n\nThere is an edge case where l = u = 2^128 - 1 where this function’s behavior is incorrect. In this case, the extrinsic will revert because l + 1 would result in an overflow as it is of type u128. However, this prevents the user from minting a token reserved for them.\n\nCurrently this should not be a problem because it is unlikely that all 2^128 ids will get reserved anytime soon.\n\nImpact: A user may not be able to mint an SBT token reserved for them.\n\nRecommendation: We recommend adding an edge case for when l = 2^128-1. In that case, the token should be minted and user removed from the map.\n\nDeveloper Response: Not to be resolved. What the auditors point out is correct that the last id will not get minted; however, the resolution is unnecessary as once we hit this edge case the entire zkSBT protocol is unable to function. Furthermore, this value is extremely large and unlikely to ever be reached.",
+      "description_summary": "Off-by-one error in to_private may prevent users from minting reserved tokens."
+    },
+    {
+      "title": "Unnecessary Storage Variable",
+      "repository": "https://github.com/Manta-Network/Manta",
+      "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+      "reported_remediated_commit": "fa10f39afcd8882d14252f55ce08ffcab6321911",
+      "location": [
+        {
+          "file_path": "pallets/manta-sbt/src/lib.rs",
+          "lines": [382]
+        }
+      ],
+      "reported_impact": "Warning",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Gas Optimization",
+      "vulnerability_class_scout": "Code Quality",
+      "description": "4.1.5 V-MSBT-VUL-005: Unnecessary Storage Variable\n\nSeverity: Warning\nType: Gas Optimization\nCommit: ceb9e46\nStatus: Fixed\nFile(s): pallets/manta-sbt/src/lib.rs\nLocation(s): 382\n\nThe storage variable UtxoAccumulatorOutputs keeps track of all Merkle roots generated by manta-sbt; however, this variable is unnecessary. It seems to be taken from the manta-pay pallet which uses it to keep track of previous Merkle roots so that when users provide membership proofs for asset transfers, the ledger can check that the root provided was a legitimate one.\n\nHowever, the tokens in manta-sbt are non-transferable so there isn’t any logic which should use it. In particular, the only two places which use this storage variable are in the functions has_matching_utxo_accumulator_output and register_all. The former will never be invoked in manta-sbt because the asset is non-transferable. The latter just adds a newly created Merkle root to UtxoAccumulatorOutputs.\n\nSince this storage variable keeps track of every root generated, it is a non-trivial amount of storage to keep on-chain. Moreover, every minting transaction, namely to_private and mint_sbt_eth, will incur an extra cost of writing to storage, which is unnecessary.\n\nImpact: Unnecessarily high transaction fees for every mint transaction and bloated storage.\n\nRecommendation: We recommend removing this storage variable.\n\nDeveloper Response: This has been fixed in the following commit.",
+      "description_summary": "Unnecessary storage variable increases transaction fees and storage usage."
+    },
+    {
+      "title": "Missing validation when setting mint info",
+      "repository": "https://github.com/Manta-Network/Manta",
+      "audited_commit": "ceb9e46cd53b77eb914ba6c17452fc238bc3a28f",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/manta-sbt/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Info",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Data Validation",
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "4.1.6 V-MSBT-VUL-006: Missing validation when setting mint info\n\nSeverity: Info\nType: Data Validation\nCommit: ceb9e46\nStatus: Acknowledged\nFile(s): pallets/manta-sbt/src/lib.rs\nLocation(s): new_mint_info, update_mint_info\n\nWhen setting metadata for a mint type, the functions new_mint_info and update_mint_info set the start_time and end_time associated with the mint type. The functions validate the start and end times by making sure start_time < end_time. However, they don’t check whether those make sense with respect to the current time. In particular, it seems like you would want now < end_time.\n\nImpact: Setting end_time < now means that nobody can mint for that mint type until it gets changed again.\n\nRecommendation: We recommend adding the additional validation which shouldn’t be too expensive.\n\nDeveloper Response: This is intended behavior for now. The only way to pause a mint is to set end_time < now. This however could be improved by using an Option<> and remove the need for this invariant. This is low priority, but we could fix it in the future.",
+      "description_summary": "Missing validation allows minting periods to be set in the past, blocking minting."
+    }
+  ]
+}

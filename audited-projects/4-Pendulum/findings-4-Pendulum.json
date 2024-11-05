@@ -1,0 +1,225 @@
+{
+  "audited_project_id": 4,
+  "project_name": "Pendulum",
+  "auditor": "Hacken",
+  "audit_link": "https://audits.hacken.io/pendulum/l1-pendulum-pendulum-chain-jun2023/",
+  "findings": [
+    {
+      "title": "ChainExtension Implementation Lacks Weight Charging",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": "5b922a210b2a6705d3ea6fefbf67b317698f7b80",
+      "location": [
+        {
+          "file_path": "runtime/foucoco/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Denial-of-Service (DoS)",
+      "vulnerability_class_scout": "Weight Management",
+      "description": "ChainExtension Implementation Lacks Weight Charging\nThe current implementation of the ChainExtension trait fails to charge weight when allowing smart contracts to call into the runtime.\nIDPDM-006\nScope: Chain Extension\nSeverity: MEDIUM\nVulnerability Type: Denial-of-Service (DoS)\nStatus: Fixed (5b922a210b2a6705d3ea6fefbf67b317698f7b80)\nDescription:\nThe call method in the ChainExtension trait defines how smart contracts can interact with the runtime. When a contract makes state changes by calling into the runtime, the corresponding weight should be charged. However, the current implementation of ChainExtension lacks any weight charging mechanism. It allows smart contracts to make calls such as transfer, approve_transfer, and transfer_approved, which are not queries and result in state changes.\nBy not charging weight for these operations, the system becomes vulnerable to potential security issues, particularly Denial-of-Service (DoS) attacks. Malicious contracts can exploit this lack of weight charging by flooding the system with a high volume of calls, overloading the network and disrupting its normal operation.\nRecommendation:\nTo mitigate this vulnerability, it is crucial to incorporate weight calculations and invoke the charge_weight function before accessing contract memory. Here is an example of how to integrate this in the code:\nlet charged_weight = env.charge_weight(sufficient_weight)?;\ntrace!(target: \"runtime\", \"[ChainExtension]|call|func_id / charge_weight:{:?}\", charged_weight);\nlet input = env.read(256)?;\nBy implementing weight charging for contract calls, the system",
+      "description_summary": "The ChainExtension implementation does not charge weight for runtime calls, making the system vulnerable to Denial-of-Service (DoS) attacks."
+    },
+    {
+      "title": "Vector of unlimited size in the pallet",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": "05607a1a9cd2ad3cebeff1294b2e4c34fa3e4721",
+      "location": [
+        {
+          "file_path": "pallets/orml-currencies-allowance-extension/src/lib.rs",
+          "lines": [134]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Memory exhaustion / DoS",
+      "vulnerability_class_scout": "Denial of Service (DoS) and Spamming",
+      "description": "Vector of unlimited size in the pallet\nThe orml-currencies-allowance-extension pallet employs the usage of the Vec data structure without incorporating any size checks.\nID: PDM-007\nScope: orml-currencies-allowance-extension pallet\nSeverity: LOW\nVulnerability Type: Memory exhaustion / DoS\nStatus: Fixed (c1a20acd965cc024ac756effbff8a12522dac87a and 05607a1a9cd2ad3cebeff1294b2e4c34fa3e4721)\n\nDescription:\nWithin the orml-currencies-allowance-extension pallet, the Vec structure is utilized in the enum Event and struct GenesisConfig. Additionally, the extrinsic functions add_allowed_currencies and remove_allowed_currencies accept a vector as a parameter. Here's an example:\npallets/orml-currencies-allowance-extension/src/lib.rs:134:\n\n#[pallet::call_index(0)]\n#[pallet::weight(<T as Config>::WeightInfo::add_allowed_currencies())]\n#[transactional]\npub fn add_allowed_currencies(\n    origin: OriginFor<T>,\n    currencies: Vec<CurrencyOf<T>>,\n) -> DispatchResult {\n    ensure_root(origin)?;\n    for i in currencies.clone() {\n        AllowedCurrencies::<T>::insert(i, ());\n    }\n    Self::deposit_event(Event::AllowedCurrenciesAdded { currencies });\n    Ok(())\n}\n\nIf an excessively large vector is provided as input to these functions, it can result in node overload due to the necessity of iterating through the entire vector. This poses a significant risk, leading to potential memory exhaustion and creating a vulnerability for denial-of-service (DoS) attacks. Although the function is restricted to root access, it's important to note that if the root account is compromised or controlled by a malicious actor, they can exploit this vulnerability by deliberately supplying large vectors. This would cause the node to consume excessive resources, potentially disrupting the normal operation of the system.\n\nRecommendation:\nTo mitigate the risks associated with the use of unlimited-sized vectors, it is strongly recommended to revise the implementation in the orml-currencies-allowance-extension pallet. We advise against the use of the Vec data structure within any part of the pallet. Instead, consider utilizing frame_support::BoundedVec, which offers a bounded-size variant of a vector. Alternatively, it's important to impose a cap on the length of the vector during each of its instances. By ensuring a maximum limit, the vector's length stays within manageable bounds, preventing excessively long processing times or resource consumption during iterations over this data structure.\n\nBy proactively addressing this issue, you can enhance the stability and security of the orml-currencies-allowance-extension pallet, ensuring the robustness and reliability of the overall system.",
+      "description_summary": "Unrestricted vector size can lead to memory exhaustion and DoS attacks."
+    },
+    {
+      "title": "Employment of Sudo Pallet",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "runtime/foucoco/src/lib.rs",
+          "lines": [1509]
+        },
+        {
+          "file_path": "node/src/chain_spec.rs",
+          "lines": [229]
+        }
+      ],
+      "reported_impact": null,
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Centralization",
+      "vulnerability_class_scout": "Business Logic",
+      "description": "Employment of Sudo Pallet\nThe current implementation of the sudo FRAME pallet in the runtime employs it as an alternative to the governance mechanism.\nID: PDM-010\nScope: Decentralization\nStatus: Acknowledged\n\nDescription:\nThe sudo pallet is integrated into the runtime configuration:\nruntime/foucoco/src/lib.rs:1509:\nconstruct_runtime!(\n    pub enum Runtime where\n        Block = Block,\n        NodeBlock = opaque::Block,\n        UncheckedExtrinsic = UncheckedExtrinsic,\n    {\n        /* ... */\n        // Governance\n        Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 12,\n        /* ... */\n    }\n);\n\nThe root account, initially set at genesis, is defined as follows:\nnode/src/chain_spec.rs:229:\nlet sudo_account =\n    pallet_multisig::Pallet::<foucoco_runtime::Runtime>::multi_account_id(&signatories[..], 3);\n\nThis configuration allows the use of the ensure_root method for operations such as add_allowed_currencies and remove_allowed_currencies. Although there is no immediate security risk associated with this setup, it raises concerns regarding potential centralization.\n\nRecommendation:\nUtilizing a root account for governance purposes is considered a less favorable design choice due to its potential for centralization and the security risks associated with compromised private keys.\n\nTo address this issue, we recommend the following actions:\n1. Comprehensive Documentation: It is crucial to thoroughly document the intended use of the sudo pallet and the root account within the project. This documentation should provide clear explanations of the potential risks and limitations associated with their usage. Both the development team and end-users should be adequately informed to ensure transparency and informed decision-making. If there are plans to deactivate the sudo functionality after the network launch, a detailed process similar to the sudo removal outlined by Polkadot should be documented.\n\n2. Auditing and Monitoring: Prior to the removal of the sudo pallet, it is essential to establish regular auditing and monitoring processes. These measures will help ensure that the sudo pallet and the root account are not misused or compromising the system's security. By conducting thorough audits and continuous monitoring, any potential vulnerabilities or misuse can be identified and addressed promptly.\n\nBy following these recommendations, you will mitigate potential centralization concerns and enhance the overall governance and security aspects of the project.",
+      "description_summary": "The use of the sudo pallet risks centralization and security vulnerabilities due to potential misuse of root access."
+    },
+    {
+      "title": "Error Handling in Chain Extension",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "runtime/foucoco/src/lib.rs",
+          "lines": [null]
+        }
+      ],
+      "reported_impact": null,
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Code Quality",
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "Error Handling in Chain Extension\nImplementation of ChainExtension often utilizes DispatchError::Other(\"Explanatory string\") error, which makes error handling difficult.\nID: PDM-009\nScope: Code Quality\nStatus: Acknowledged\n\nDescription:\nThe current implementation of ChainExtension frequently relies on the generic DispatchError::Other() error. This approach makes error handling challenging, particularly for developers working with smart contracts. The indiscriminate use of this error type makes it difficult to monitor and diagnose specific errors, impeding efficient troubleshooting and code improvement.\n\nRecommendation:\nTo improve error handling in the ChainExtension implementation, we recommend implementing a custom enum that covers all the required error types. This custom enum will provide a more structured approach to error handling by encapsulating specific errors and enabling precise identification and resolution of issues.\n\nBy implementing the custom enum and incorporating it into the RetVal result, developers will have access to more detailed error information, allowing them to effectively identify and handle different error scenarios. This approach enhances the overall robustness and maintainability of the codebase, as well as facilitates troubleshooting and future improvements.",
+      "description_summary": "Use of generic DispatchError::Other hampers error handling and troubleshooting."
+    },
+    {
+      "title": "Hardcoded Constants in match",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "runtime/foucoco/src/lib.rs",
+          "lines": [964]
+        }
+      ],
+      "reported_impact": null,
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Code Quality",
+      "vulnerability_class_scout": "Code Quality",
+      "description": "Hardcoded Constants in match\nThe presence of hardcoded constants in the match statement within the implementation of ChainExtension hampers code readability.\nID: PDM-008\nScope: Code Quality\nStatus: Acknowledged\n\nDescription:\nThe following code segment has drawn our attention:\nruntime/foucoco/src/lib.rs:964:\n\nmatch func_id {\n    // transfer\n    1105 => { /* ... */ },\n    // balance\n    1106 => { /* ... */ },\n    // total_supply\n    1107 => { /* ... */ },\n    // approve_transfer\n    1108 => { /* ... */ },\n    // transfer_approved\n    1109 => { /* ... */ },\n    // allowance\n    1110 => { /* ... */ },\n    // dia price feed\n    7777 => { /* ... */ },\n    _ => { /* ... */ },\n}\n\nWhile the code comments provide some understanding of the functionality associated with each func_id, it is recommended to enhance the code logic in this section to improve comprehensibility, rather than solely relying on comments.\n\nRecommendation:\nWe recommend creating a separate enum to handle all the supported func_id options, using descriptive names that correspond to each function. This approach enhances code readability and maintainability:\n\nenum FuncId {\n    Transfer,\n    Balance,\n    TotalSupply,\n    ApproveTransfer,\n    TransferApproved,\n    Allowance,\n    DiaPriceFeed,\n}\n\nimpl TryFrom<u16> for FuncId {\n    type Error = DispatchError;\n    fn try_from(func_id: u16) -> Result<Self, Self::Error> {\n        let id = match func_id {\n            1105 => Self::Transfer,\n            1106 => Self::Balance,\n            1107 => Self::TotalSupply,\n            1108 => Self::ApproveTransfer,\n            1109 => Self::TransferApproved,\n            1110 => Self::Allowance,\n            7777 => Self::DiaPriceFeed,\n            _ => {\n                error!(\"Called an unregistered `func_id`: {:?}\", func_id);\n                return Err(DispatchError::Other(\"Unimplemented func_id\"));\n            }\n        };\n        Ok(id)\n    }\n}\n\nThis enum allows for easier handling of the logic within the match statement in the call implementation.\n\nFurthermore, it is good practice to implement the logic for each function in a separate method instead of encapsulating all the code within the match arms. This promotes code modularity and readability.\n\nHere's an example of how the code would look with the recommended changes:\n\nlet func_id = FuncId::try_from(env.func_id())?;\nmatch func_id {\n    FuncId::Transfer => /* Call method that performs transfer */,\n    FuncId::Balance => /* Call method that returns balance */,\n    FuncId::TotalSupply => /* ... */ ,\n    FuncId::ApproveTransfer => /* ... */,\n    FuncId::TransferApproved => /* ... */,\n    FuncId::Allowance => /* ... */,\n    FuncId::DiaPriceFeed => /* ... */,\n}\n\nWith these improvements, the code becomes more comprehensible, maintainable, and follows best practices.",
+      "description_summary": "Hardcoded constants in match statements reduce code readability and maintainability."
+    },
+    {
+      "title": "Linter Warnings",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/orml-currencies-allowance-extension/src/lib.rs",
+          "lines": [245, 246]
+        }
+      ],
+      "reported_impact": null,
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Linters",
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "Linter Warnings\nThe codebase has generated several warnings when analyzed using cargo clippy, indicating areas where improvements can be made to enhance the code quality.\n\nID: PDM-002\nScope: Linters\nStatus: Acknowledged\n\nDescription:\nDuring the static analysis process using cargo clippy, the following warnings within the scope of the audit were identified:\n- //rust-lang.github.io/rust-clippy/master/index.html#needless_return\">needless_return\n- //rust-lang.github.io/rust-clippy/master/index.html#needless_borrow\">needless_borrow\n\nLocation:\npallets/orml-currencies-allowance-extension/src/lib.rs:245-246:\n&owner,\n&destination,\n\nRecommendation:\nTo maintain a high-quality and easily maintainable codebase, it is advised to address the warnings generated by cargo clippy. Resolving these linter warnings will improve the overall code quality, facilitate troubleshooting, and potentially enhance performance and security within the project.",
+      "description_summary": "Codebase has linter warnings that impact maintainability and should be resolved to enhance quality and security."
+    },
+    {
+      "title": "Logging in Runtime",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "runtime/foucoco/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": null,
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Code Quality",
+      "vulnerability_class_scout": "Code Quality",
+      "description": "Logging in Runtime\nThe implementation of ChainExtension contains a lot of unnecessary warn!() macros.\nID: PDM-011\nScope: Logging\nStatus: Acknowledged\n\nDescription:\nUpon reviewing the runtime code, it was observed that numerous instances of the warn!() macro are present. While the warn macro can be useful during testing or debugging phases, it is unnecessary in the final version of the code. These superfluous warn macros clutter the codebase and can impede code readability and maintenance.\n\nUnneeded logging statements add noise to the code and distract developers from critical information. In the absence of proper justification, excessive logging can obscure important log messages and make it more challenging to identify and address genuine issues.\n\nRecommendation:\nTo enhance the code quality and maintainability of the runtime, we recommend refining the use of warn macros. By limiting the use of these macros to critical and important situations, the codebase will become more concise and easier to comprehend. This targeted approach will enable developers to focus on essential log messages that offer meaningful insights into the system's behavior, rather than being overwhelmed by extraneous warnings. Therefore, unnecessary warn macros should be reviewed and removed, with a priority on retaining only those that provide critical and important warnings.",
+      "description_summary": "Excessive warn!() macros in the implementation of ChainExtension clutter code and reduce maintainability."
+    },
+    {
+      "title": "Pendulum build",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "Cargo.toml",
+          "lines": null
+        }
+      ],
+      "reported_impact": null,
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Build Process",
+      "vulnerability_class_scout": "Code Quality",
+      "description": "Pendulum build\nThe Pendulum chain demonstrates a smooth and error-free build process.\nID: PDM-001\nScope: Build Process\nStatus: Fixed\n\nDescription:\nThe build process for the Pendulum chain is efficient and error-free. When executing the cargo build --release command, the output confirms a successful build with only one minor compiler warning related to an unused import. The build process adheres to sound Rust coding practices and follows idiomatic conventions.\n\nDuring the assessment, it was observed that the orml-currencies-allowance-extension pallet is not included as a member of the workspace, although it should be.\n\nRecommendation:\nTo address this issue, we recommend adding pallets/orml-currencies-allowance-extension to the members list in the main Cargo.toml file of the workspace.\n\nPlease note that this issue does not encompass the results of linting tools, such as Clippy, which may provide additional warnings and recommendations for improving code quality. These will be addressed separately in PDM-002.",
+      "description_summary": "Missing a member in the workspace configuration."
+    },
+    {
+      "title": "Superfluous Implementation of Hooks Trait",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/orml-currencies-allowance-extension/src/lib.rs",
+          "lines": [99]
+        }
+      ],
+      "reported_impact": null,
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Code Quality",
+      "vulnerability_class_scout": "Code Quality",
+      "description": "Superfluous Implementation of Hooks Trait\nThe Hooks trait has been declared in the orml-currencies-allowance-extension pallet, but no custom implementations have been provided.\nID: PDM-005\nScope: Code Quality\nStatus: Acknowledged\n\nDescription:\nThe following code snippet raises concerns:\npallets/orml-currencies-allowance-extension/src/lib.rs:99:\n\n#[pallet::hooks]\nimpl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}\n\nThe Hooks trait is typically used to perform logic on every block initialization, finalization, and other specific actions. However, in the case of the orml-currencies-allowance-extension pallet, no methods from the Hooks trait are implemented. While this does not cause any immediate detrimental effects, it can reduce code readability and increase complexity.\n\nRecommendation:\nTo improve code clarity and readability, it is recommended to eliminate the use of the Hooks trait in the orml-currencies-allowance-extension pallet. Since no custom implementations are provided, removing the Hooks trait declaration will simplify the code and remove unnecessary complexity.",
+      "description_summary": "The Hooks trait has been declared in the orml-currencies-allowance-extension pallet, but no custom implementations have been provided."
+    },
+    {
+      "title": "Test Coverage",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/orml-currencies-allowance-extension/src/lib.rs",
+          "lines": null
+        },
+        {
+          "file_path": "runtime/foucoco/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": null,
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Code Quality / Testing",
+      "vulnerability_class_scout": "Code Quality",
+      "description": "Test Coverage\nThe current test coverage of the orml-currencies-allowance-extension pallet is insufficient, with only 22.22% coverage. Moreover, the implementation of ChainExtension in the runtime lacks any test coverage.\n\nID: PDM-003\nScope: Code Quality / Testing\nStatus: Acknowledged\n\nDescription:\nTo evaluate the test coverage, we recommend using the cargo tarpaulin command:\ncargo tarpaulin --out Html --output-dir ./tarpaulin-report\n\nRunning this command generates an HTML file that provides detailed coverage information for all packages. Specifically, it highlights the orml-currencies-allowance-extension pallet, which currently has a coverage of only 22.22%. Additionally, it reveals the absence of tests for the methods utilized in the runtime to implement ChainExtension, including is_allowed_currency, allowance, do_approve_transfer, and do_transfer_approved, as well as the lack of testing for the overall ChainExtension implementation in the foucoco runtime.\n\nRecommendation:\nTo address the low test coverage in the orml-currencies-allowance-extension pallet and the lack of test coverage in the runtime implementation of ChainExtension, it is essential to develop a comprehensive test suite. This suite should include thorough testing to ensure the security, stability, and maintainability of the project.\n\nImplementing continuous integration (CI) systems to automate the execution of the test suite is highly recommended. This practice enables the team to identify areas with insufficient test coverage, detect regressions, and uncover areas that require improvement. By incorporating CI into the development workflow, valuable feedback is obtained, ultimately enhancing the overall quality of the codebase.",
+      "description_summary": "Insufficient test coverage in key areas affects security, stability, and maintainability."
+    },
+    {
+      "title": "Vulnerable and Unmaintained Dependencies",
+      "repository": "https://github.com/pendulum-chain/pendulum",
+      "audited_commit": "d01528d17b96bf3de72c36deb3800c2ed0cf2afb",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/orml-currencies-allowance-extension/Cargo.toml",
+          "lines": null
+        }
+      ],
+      "reported_impact": null,
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Dependency Management",
+      "vulnerability_class_scout": "Dependency",
+      "description": "Vulnerable and Unmaintained Dependencies\nThe orml-currencies-allowance-extension pallet has dependencies that include one vulnerable crate plus three unmaintained crates.\nID: PDM-004\nScope: Dependencies\nStatus: Acknowledged\n\nDescription:\nThe orml-currencies-allowance-extension pallet has several dependencies that raise concerns regarding their security and maintenance. The following table provides details about these dependencies:\n\nDependency  | Version | Id            | Type            | Remediation\n------------|---------|---------------|-----------------|--------------------------------------------------\ntime        | 0.1.45  | RUSTSEC-2020-0071 | Vulnerability   | Upgrade to >=0.2.23\nansi_term   | 0.12.1  | RUSTSEC-2021-0139 | Unmaintained   | Use alternative crates: anstyle, console, nu-ansi-term, owo-colors, stylish, yansi\nmach        | 0.3.2   | RUSTSEC-2020-0168 | Unmaintained   | Switch to mach2\nparity-wasm | 0.45.0  | RUSTSEC-2022-0061 | Unmaintained   | Switch to wasm-tools\n\nAlthough these dependencies may not have an immediate impact on the security aspect and are part of the Substrate project, it is essential to regularly review dependencies and monitor for updates to ensure the overall security and maintenance of the project.\n\nRecommendation:\nTo address these concerns and maintain a secure codebase, it is recommended to take the following actions:\n\n1. Use cargo audit to check for any new vulnerabilities or outdated packages in your project's dependencies. Regularly perform these checks to stay updated on potential security issues.\n2. Monitor for new releases of Substrate and update your project accordingly. Keeping your project up to date with the latest Substrate releases ensures that you benefit from bug fixes, security patches, and improvements.\n\nAdditionally, it is worth noting that the latest available Substrate release at the time of writing is v0.9.43. Stay informed about new releases and evaluate the feasibility of updating your project to benefit from the latest features and improvements.",
+      "description_summary": "Dependency includes one vulnerable and three unmaintained crates requiring updates or replacements."
+    }
+  ]
+}
