@@ -10,20 +10,26 @@ Welcome to the **Scout Substrate Dataset**, a collection of thoroughly analyzed 
 
 Our goal is to provide a reference point for the community, compiling key security issues found in Substrate projects, facilitating better security practices, and serving as a resource for improving vulnerability detection tools like [Scout](https://www.coinfabrik.com/products/scout/)
 
-### Dataset Breakdown
+## Dataset Breakdown
 
 We have structured the `Scout Substrate Dataset` into the following folders:
 
-- **`/dataset/`**:
-  - **`findings.json`**: A comprehensive list of all findings across the audited projects.
-  - **`findings-linear.json`**: The `findings.json` file further processed to be imported in hugging face.
 - **`/audited-projects/`**:
   - Contains directories for each audited project, labeled by `[audited-project-id]-[project-name]`.
   - Each directory contains:
     - **`[project-audit].pdf`**: The original audit report in PDF format.
     - **`findings-[audited-project-id]-[project-name].json`**: JSON file containing the project-specific findings.
 
-For information on accessing the full codebase, including audited and remediated code for each project, refer to the [Accessing Audited Project Code](#accessing-audited-project-code) section below.
+### Generate Dataset
+
+To generate the dataset, run `make dataset`. It will generate the **`/dataset/`** directory with the following files:
+
+- **`findings.json`**: A comprehensive list of all findings across the audited projects.
+- **`findings-linear.json`**: The `findings.json` file further processed to be imported into Hugging Face.
+
+### Accessing Audited Project Code
+
+For access to the complete codebase associated with this dataset, including tagged archives for each audit finding and remediation, visit the [Scout Substrate Dataset Code](https://github.com/CoinFabrik/scout-substrate-dataset-code) repository. Download bundles by tag or commit hash, enabling a full historical view of each project version.
 
 ## Audited Projects
 
@@ -43,10 +49,6 @@ This dataset currently contains the following audited Substrate projects:
 | 11                 | Astar         | Zellic                 |
 
 More projects will be added as new audits are analyzed.
-
-## Accessing Audited Project Code
-
-For access to the complete codebase associated with this dataset, including tagged archives for each audit finding and remediation, visit the [Scout Substrate Dataset Code](https://github.com/CoinFabrik/scout-substrate-dataset-code) repository. Download bundles by tag or commit hash, enabling a full historical view of each project version.
 
 ## Substrate Issue Classes
 
@@ -89,4 +91,4 @@ As proud members, and with the support of the [Polkadot Assurance Legion (PAL)](
 
 ## License
 
-Scout is licensed and distributed under a MIT license. [Contact us](https://www.coinfabrik.com/) if you're looking for an exception to the terms.
+The Scout Substrate Dataset is licensed and distributed under the MIT license. [Contact us](https://www.coinfabrik.com/) if you're looking for an exception to the terms.

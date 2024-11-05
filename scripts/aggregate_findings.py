@@ -36,7 +36,7 @@ def aggregate_findings(input_dir: Path, output_file: Path, descending: bool = Fa
     
     # Write aggregated findings to output file
     with output_file.open('w') as f:
-        json.dump(findings_data, f, indent=4)
+        json.dump(findings_data, f, indent=2)
 
 if __name__ == "__main__":
     # Define input and output paths relative to this script's location
