@@ -14,9 +14,6 @@ Our goal is to provide a reference point for the community, compiling key securi
 
 We have structured the `Scout Substrate Dataset` into the following folders:
 
-- **`/dataset/`**:
-  - **`findings.json`**: A comprehensive list of all findings across the audited projects.
-  - **`findings-linear.json`**: The `findings.json` file further processed to be imported in hugging face.
 - **`/audited-projects/`**:
   - Contains directories for each audited project, labeled by `[audited-project-id]-[project-name]`.
   - Each directory contains:
@@ -24,6 +21,13 @@ We have structured the `Scout Substrate Dataset` into the following folders:
     - **`findings-[audited-project-id]-[project-name].json`**: JSON file containing the project-specific findings.
 
 For information on accessing the full codebase, including audited and remediated code for each project, refer to the [Accessing Audited Project Code](#accessing-audited-project-code) section below.
+
+#### Generate Dataset
+
+To generate the dataset, run `make dataset`. It will generate the **`/dataset/`** directory with the following files:
+
+- **`findings.json`**: A comprehensive list of all findings across the audited projects.
+- **`findings-linear.json`**: The `findings.json` file further processed to be imported into Hugging Face.
 
 ## Audited Projects
 
@@ -89,4 +93,4 @@ As proud members, and with the support of the [Polkadot Assurance Legion (PAL)](
 
 ## License
 
-Scout is licensed and distributed under a MIT license. [Contact us](https://www.coinfabrik.com/) if you're looking for an exception to the terms.
+The Scout Substrate Dataset is licensed and distributed under the MIT license. [Contact us](https://www.coinfabrik.com/) if you're looking for an exception to the terms.
