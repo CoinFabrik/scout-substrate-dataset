@@ -1,0 +1,88 @@
+{
+  "audited_project_id": 14,
+  "project_name": "LAOS",
+  "auditor": "CoinFabrik",
+  "audit_link": "https://github.com/CoinFabrik/coinfabrik-audit-reports/blob/main/Laos/CoinFabrik-LAOS_Audit-2024-08.pdf",
+  "findings": [
+    {
+      "title": "Unrestricted URI",
+      "repository": "https://github.com/freeverseio/laos",
+      "audited_commit": "16bd9e56d20c206cf927d961c8ec58f299308473",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/laos-evolution",
+          "lines": null
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": "CWE-1269",
+      "vulnerability_class_audit": "CWE-1269: Product Released in Non-Release Configuration",
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "High Severity Issues\nHI-01 Unrestricted URI\nFound on commit: 16bd9e56d20c206cf927d961c8ec58f299308473\nLocation:\n- pallets/laos-evolution\nClassification:\n- CWE-1269: Product Released in Non-Release Configuration\nIf a collection created via the EvolutionCollectionFactory precompile is set to allow public minting, any user of the LAOS blockchain may create new collection items corresponding to any slot not being used, pointing to any malicious URI, including URIs pointing to:\n1. Browser exploits\n2. Client-side attacks\n3. Illegal images\n4. Gross images\n5. URIs that would only appear in the item after an evolution.\nThese may appear in the NFT related to the collection, and shown in the websites where NFTs are traded.\nThe severity of this issue was lowered given that public minting is not enabled by default.\nRecommendation\nEither whitelist the URIs (and owners) of the minted items when the minting is not made by the owner or disallow minting by a non-owner account.\nIf the second option is implemented an intermediate contract may be set as the owner and handle both the access and the allowed URIs to mint and or evolve items.\nStatus\nAcknowledged. The development team informed us that they are aware of this issue but do not want to remove it yet, as it allows them to test bridgeless minting.",
+      "description_summary": "Public minting allows any user to create collection items with potentially malicious URIs."
+    },
+    {
+      "title": "Lack of URI Validation",
+      "repository": "https://github.com/freeverseio/laos",
+      "audited_commit": "16bd9e56d20c206cf927d961c8ec58f299308473",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/asset-metadata-extender",
+          "lines": null
+        },
+        {
+          "file_path": "pallets/laos-evolution",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": "CWE-1286",
+      "vulnerability_class_audit": "CWE-1286: Improper Validation of Syntactic Correctness of Input",
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "ME-01 Lack of URI Validation\nFound on commit: 16bd9e56d20c206cf927d961c8ec58f299308473\nLocation:\n- pallets/asset-metadata-extender\n- pallets/laos-evolution\nClassification:\n- CWE-1286: Improper Validation of Syntactic Correctness of Input\nThe URIs received in the functions of the AssetMetadataExtender precompile and the EvolutionCollection precompile are not being validated nor canonized. These URIs are then stored and can be consulted from the state of the blockchain by other systems.\nThis may lead to exploiting these other systems with malformed URIs.\nThis issue makes the HI-01 Unrestricted URI issue more dangerous, as any account may write malformed URIs to be read by other systems.\nRecommendation\nIn order to solve this issue, we recommend the string parameter receiving the URI parameter to be parsed to check that it conforms to the URI format.\nIn order to mitigate this issue, you may choose to document in the .sol files that document the interfaces of the precompiles that the format of the URI is not being validated on-chain.\nStatus\nUnresolved.",
+      "description_summary": "URIs are not validated or canonized, allowing malformed URIs to be stored and potentially exploited by other systems."
+    },
+    {
+      "title": "No Logging on Minting Error",
+      "repository": "https://github.com/freeverseio/laos",
+      "audited_commit": "16bd9e56d20c206cf927d961c8ec58f299308473",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/parachain-staking/src/rewards/mint_rewards.rs",
+          "lines": [{ "from": 50, "to": 55 }]
+        }
+      ],
+      "reported_impact": "Minor",
+      "reported_likelihood": null,
+      "cwe_classification": "CWE-778",
+      "vulnerability_class_audit": "CWE-778: Insufficient Logging",
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "Minor Severity Issues\nMI-01 No Logging on Minting Error\nFound on commit: 16bd9e56d20c206cf927d961c8ec58f299308473\nLocation:\n- pallets/parachain-staking/src/rewards/mint_rewards.rs: 50-55\nClassification:\n- CWE-778: Insufficient Logging\nIf funds are not deposited for the collator when making a new block, the error is not registered anywhere.\nThis can be seen in the following code, where there is no else clause\nif let Ok(amount_transferred) = T::Currency::deposit_into_existing(&collator_id, amt) {\nSelf::deposit_event(Event::Rewarded {\naccount: collator_id.clone(),\nrewards: amount_transferred.peek(),\n});\n}\nRecommendation\nEither generate an event showing the error or at least log the error.\nStatus\nUnresolved.",
+      "description_summary": "Minting errors are not logged, leaving issues untraceable."
+    },
+    {
+      "title": "Lack of Universal Location Validation",
+      "repository": "https://github.com/freeverseio/laos",
+      "audited_commit": "16bd9e56d20c206cf927d961c8ec58f299308473",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "pallets/asset-metadata-extender",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Minor",
+      "reported_likelihood": null,
+      "cwe_classification": "CWE-1286",
+      "vulnerability_class_audit": "CWE-1286: Improper Validation of Syntactic Correctness of Input",
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "MI-02 Lack of Universal Location Validation\nFound on commit: 16bd9e56d20c206cf927d961c8ec58f299308473\nLocation:\n- pallets/asset-metadata-extender\nClassification:\n- CWE-1286: Improper Validation of Syntactic Correctness of Input\nWhen extending or updating an universal location with an URI using the extendULWithExternalURI or updateExtendedULWithExternalURI functions, the string where the universal location is received is not validated. This string is then reflected in the emitted events that can be processed by other systems. This may lead to exploiting these other systems with malformed universal locations.\nThis issue has less severity than the ME-01 Lack of URI Validation issue given that the universal location is reflected only in events.\nRecommendation\nIn order to solve this issue, we recommend the string parameter receiving the universal location parameter to be parsed to check that it conforms to the URI format.\nIn order to mitigate this issue, you may choose to document in the .sol files that document the interfaces of the precompiles that the format of the universal location is not being validated on-chain.\nStatus\nUnresolved.",
+      "description_summary": "Universal location strings are not validated, risking exploitation through malformed inputs in emitted events."
+    }
+  ]
+}
