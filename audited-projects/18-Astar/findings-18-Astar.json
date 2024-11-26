@@ -1,0 +1,84 @@
+{
+  "audited_project_id": 18,
+  "project_name": "Astar",
+  "auditor": "Quantstamp",
+  "audit_link": "https://certificate.quantstamp.com/full/a-star-network-custom-signature.pdf",
+  "findings": [
+    {
+      "title": "Overflow on The Libsecp256k1",
+      "repository": "https://github.com/PlasmNetwork/Astar",
+      "audited_commit": "7bb088bd6be8dd8c06823729fbbaf71a507095ab",
+      "reported_remediated_commit": "ac131c781e6fd6866f3dfd7908678de0a701828e",
+      "location": [
+        {
+          "file_path": "frame/custom-signatures/Cargo.toml",
+          "lines": [23]
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Dependency",
+      "description": "QSP-1 Overflow on The Libsecp256k1\nSeverity: High Risk\nStatus: Fixed\nFile(s) affected: frame/custom-signatures/Cargo.toml\nDescription: In frame/custom-signatures/Cargo.toml (L23): Libsecp256k1 accepts signatures whose R or S parameter is larger than the secp256k1 curve order, which differs from other implementations. This could lead to invalid signatures being verified. This error is resolved in 0.5.0 by adding a check_overflow flag.\nRecommendation: Update the Libsecp Library to the latest version (Greater than 0.5.0).",
+      "description_summary": "Libsecp256k1 allowed invalid signatures due to lack of parameter size checks."
+    },
+    {
+      "title": "Lack of Validation in the 'what' Parameter",
+      "repository": "https://github.com/PlasmNetwork/Astar",
+      "audited_commit": "7bb088bd6be8dd8c06823729fbbaf71a507095ab",
+      "reported_remediated_commit": "ac131c781e6fd6866f3dfd7908678de0a701828e",
+      "location": [
+        {
+          "file_path": "frame/custom-signatures/src/ethereum.rs",
+          "lines": [44]
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "QSP-2 Lack of Validation in the what Parameter\nSeverity: Medium Risk\nStatus: Mitigated\nFile(s) affected: frame/custom-signatures/src/ethereum.rs\nDescription: In frame/custom-signatures/src/ethereum.rs (L44): the signable_message function takes as parameters the variable what and then it executes a loop N times such that N is the length of the variable what. The problem here is that there is no limit on the length of this variable, which can cause a denial of service during the execution of this function call.\nRecommendation: Enforce a limitation on the size of the what parameter.\nUpdate: 2021-09-17: The original issue was solved by using a double-hashing approach. However, the admin team should be aware that this approach increases the probability of collision and could thus introduce additional risk to the system.",
+      "description_summary": "Lack of length validation in the 'what' parameter could cause a denial of service."
+    },
+    {
+      "title": "Cross Chain Replay Attack is Possible",
+      "repository": "https://github.com/PlasmNetwork/Astar",
+      "audited_commit": "7bb088bd6be8dd8c06823729fbbaf71a507095ab",
+      "reported_remediated_commit": "ac131c781e6fd6866f3dfd7908678de0a701828e",
+      "location": [
+        {
+          "file_path": "frame/custom-signatures/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "QSP-3 Cross Chain Replay Attack is Possible\nSeverity: Medium Risk\nStatus: Fixed\nFile(s) affected: frame/custom-signatures/src/lib.rs\nDescription: Cross chain replay attack is possible for the current custom signature design because there is no information in the signature which blockchain a signature is intended for.\nRecommendation: Include the chainId into the signature to distinguish a signature for a specific blockchain from the other blockchains. Reference: Signing Data with MetaMask.\nUpdate: 2021-09-17: The admin team stated that ChainId will be used to fill in the magic number field.",
+      "description_summary": "Cross chain replay attack possible due to lack of blockchain identification in the signature."
+    },
+    {
+      "title": "Order Logic In Nonce Increment",
+      "repository": "https://github.com/PlasmNetwork/Astar",
+      "audited_commit": "7bb088bd6be8dd8c06823729fbbaf71a507095ab",
+      "reported_remediated_commit": "ac131c781e6fd6866f3dfd7908678de0a701828e",
+      "location": [
+        {
+          "file_path": "frame/custom-signatures/src/lib.rs",
+          "lines": [113]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "QSP-4 Order Logic In Nonce Increment\nSeverity: Low Risk\nStatus: Fixed\nFile(s) affected: frame/custom-signatures/src/lib.rs\nDescription: In frame/custom-signatures/src/lib.rs (L113): in the call function, the first thing verified is the validity of the transaction with the help of the nonce. Once the verification has been done, this nonce will be incremented, and if the following lines have some problems or errors, the nonce will still be incremented, causing improper execution.",
+      "description_summary": "Improper nonce increment logic could cause incorrect transaction execution."
+    }
+  ]
+}
