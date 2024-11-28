@@ -1,0 +1,351 @@
+{
+  "audited_project_id": 20,
+  "project_name": "CasperLabs",
+  "auditor": "Quantstamp",
+  "audit_link": "https://certificate.quantstamp.com/full/casper-labs-phase-1.pdf",
+  "findings": [
+    {
+      "title": "Authentication Relies on Deploy Launcher",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/auction/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "QSP-1 Authentication Relies on Deploy Launcher\nSeverity: High Risk\nStatus: Acknowledged\nFile(s) affected: types/src/system/auction/mod.rs\nDescription: The Auction::add_bid, Auction::withdraw_bid, Auction::delegate, Auction::undelegate, and Auction::activate_bid functions authenticate based on the user account/contract that originates the deploy, not on the contract or account that makes the contract call. Hence, if a user deploy interacts with an untrusted contract, the latter can call the system contracts on behalf of the user that initiated the deploy.\nRecommendation: At the very least, document the current authentication limitations, providing clear semantics for get_caller, something that is not currently present in the online documentation. Ideally, introduce a new construct to perform the authentication based on the immediate caller of the contract and not on the deploy origin. With the latter, authenticate using the immediate caller, taking funds from its main purse instead of the deploy initiator.",
+      "description_summary": "Authentication relies on the deploy origin instead of the immediate caller, enabling potential unauthorized contract calls."
+    },
+    {
+      "title": "Delegated Tokens Are Not Slashed",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/auction/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "QSP-2 Delegated Tokens Are Not Slashed\nSeverity: High Risk\nStatus: Unresolved\nFile(s) affected: types/src/system/auction/mod.rs\nDescription: Following the online documentation: \"Casper does not treat delegated stake differently from validator stake. If the validator is slashed, all tokens delegated to the validator will also be slashed\". However, the slash function does not slash delegated stake; rather, it only slashes the validator's. This opens the room for validators to delegate to themselves, reducing their slashed amount if they misbehave (intentionally or not).\nExploit Scenario: Since delegated stake is not currently slashed validators can bid a single mote and then (possibly through a different account), delegate themselves the remaining value. They can then win elections and misbehave as they like. Slashings won’t affect them because the delegated stake is not slashed.\nRecommendation: Slash delegated stake.",
+      "description_summary": "Delegated tokens are not slashed, allowing validators to reduce penalties by self-delegation."
+    },
+    {
+      "title": "Unhandled Integer Overflow",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/mint/mod.rs",
+          "lines": [76, 140]
+        },
+        {
+          "file_path": "types/src/system/auction/bid/vesting.rs",
+          "lines": [75, 77]
+        },
+        {
+          "file_path": "types/src/system/auction/seigniorage_recipient.rs",
+          "lines": [38, 47]
+        },
+        {
+          "file_path": "types/src/system/auction/mod.rs",
+          "lines": [367, 422, 424, 488, 499, 500, 511, 501]
+        },
+        {
+          "file_path": "types/src/system/handle_payment/mod.rs",
+          "lines": [127]
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Arithmetic",
+      "description": "QSP-3 Unhandled Integer Overflow\nSeverity: High Risk\nStatus: Unresolved\nFile(s) affected: types/src/system/*\nDescription: In many parts of the audited system contracts, potential integer overflows could occur; for instance, in (this list may not be exhaustive; we suggest a thorough search):\n• types/src/system/mint/mod.rs (L76);\n• types/src/system/mint/mod.rs (L140);\n• types/src/system/auction/bid/vesting.rs (L75);\n• types/src/system/auction/bid/vesting.rs (L77);\n• types/src/system/auction/seigniorage_recipient.rs (L38);\n• types/src/system/auction/seigniorage_recipient.rs (L47);\n• types/src/system/auction/mod.rs (L424).\n• types/src/system/auction/mod.rs (L367, 422, 424, 488, 499, 500, 511);\n• types/src/system/auction/mod.rs (L501).\nAlso note that in system/handle_payment/mod.rs there is a possible overflow on L127. Although REFUND_PERCENTAGE is zero now and therefore poses no threat, there's no guarantee this will not change in the future.\nRecommendation: Either enable the compiler overflow check in release mode, or rely on checked arithmetic operations (e.g., check_add) at the code level.",
+      "description_summary": "Potential integer overflows exist in multiple contract functions and modules."
+    },
+    {
+      "title": "Performance Degradation and Denial of Service",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/auction/*",
+          "lines": null
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Denial of Service (DoS) and Spamming",
+      "description": "QSP-4 Performance Degradation and Denial of Service\nSeverity: High Risk\nStatus: Unresolved\nFile(s) affected: types/src/system/auction/*\nDescription: The performance of the following functions is negatively impacted as more users delegate stake and/or make bids. As more storage is required, serialization costs and loop iterations increase:\n• auction::bid::process;\n• auction::Auction::get_era_validators;\n• auction::Auction::read_seigniorage_recipients;\n• auction::Auction::add_bid;\n• auction::Auction::withdraw_bid;\n• auction::Auction::delegate;\n• auction::Auction::run_auction;\n• auction::Auction::distribute;\n• auction::detail::get_bids;\n• auction::detail::set_bids;\n• auction::detail::get_unbonding_purses;\n• auction::detail::set_unbonding_purses;\n• auction::detail::process_unbond_requests;\n• auction::detail::create_unbonding_purse;\n• auction::detail::reinvest_delegator_rewards;\n• auction::detail::reinvest_validator_reward.\nIf too many delegators join and make an increasingly high number of bids, the overall system performance degrades, potentially impacting the usability as the Casper network grows. Moreover, one should not ignore the possibility of denial-of-service attacks, either from attackers making many bids and delegations or from them exploiting the fact that many of these functions have fixed gas costs.\nRecommendation: One way to handle this issue is to require a large minimum bond in order to participate in the auction. However, while this mitigates the denial of service problem, it does not solve the performance degradation case. For the latter, a major code overhaul would be required. A redesign of the auction contract storage would be needed so only fixed-size data structures are stored under each key. The main idea is to have each validator have a single purse where all bonded funds (delegated or not) are stored. Whenever someone (validator or delegator) bonds, the auction contract would emit that party a promissory note containing a share value representing the equity of the party over the stake and rewards. By burning a promissory note, a user could retrieve the funds to which he is entitled. The total amount of shares is variable to accommodate bonds and unbonds without changing the share amounts in the promissory notes. This way, simply minting into the bond purse would automatically increase everyone's value and, by burning from the purse, one would automatically punish the stake-holders. Note that promissory notes are fungible, so they can be stored as a map from the validator and delegator account hashes to the amount of shares. When implementing this, one needs to be extremely mindful and careful with the share arithmetic, which is a major source of rounding related issues in smart contracts.",
+      "description_summary": "Performance degradation and potential denial of service due to high storage and computation demands in auction functions."
+    },
+    {
+      "title": "Incorrect Refund Formula",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/handle_payment/mod.rs",
+          "lines": [124]
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Arithmetic",
+      "description": "QSP-5 Incorrect Refund Formula\nSeverity: Medium Risk\nStatus: Unresolved\nDescription: The formula in types/src/system/handle_payment/mod.rs (L124) is missing a division by 100.\nExploit Scenario: Once the Casper Labs team updates L16 with a percentage larger than 1, users can carefully craft payment code that would allow free execution as follows (for illustration purposes, say the percentage is set to 2):\n• The attacker estimates the gas cost of the deploy;\n• The attacking deploy deposits roughly twice that cost into the payment purse (usually a little more for a safety margin);\n• The refund is computed as (total - amount_spent) * 2, which, in this case, would be roughly total;\n• The execution, no matter how expensive, will only be charged very little.\nWhile it doesn't look like funds can be minted or stolen, at this point we can not discard this possibility.\nRecommendation: Divide the expression by 100. Note this fix has to be performed in conjunction with QSP-3 (Unhanded Integer Overflow).",
+      "description_summary": "Refund formula lacks division by 100, enabling potential undercharging of execution costs."
+    },
+    {
+      "title": "Balance Probes Do Not Enforce Read Rights",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/mint/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "QSP-6 Balance Probes Do Not Enforce Read Rights\nSeverity: Low Risk\nStatus: Acknowledged\nFile(s) affected: types/src/system/mint/mod.rs\nDescription: Following the spec, a URef should only be read if it has been given read rights. However, in Mint::balance, this check is not performed; any contract could read one's balances knowing a purse's URef.\nRecommendation: Add a condition statement checking whether the URef grants read permission; if not, revert.\nUpdate: The team has clarified that for the balance read, this is an exception to the general rule, as there is a case for users checking other users' balances.",
+      "description_summary": "Mint::balance does not enforce read rights, allowing unauthorized balance access via URef."
+    },
+    {
+      "title": "Transfer Does Not Check Read Access of Source",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/mint/mod.rs",
+          "lines": [104]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "QSP-7 transfer Does Not Check Read Access of source\nSeverity: Low Risk\nStatus: Unresolved\nFile(s) affected: types/src/system/mint/mod.rs\nDescription: The Mint::transfer function does not check whether the source URef has read rights, nor does the call to read_balance (L104). This should be the case; otherwise, a source without read rights would still be read.\nRecommendation: Add a condition statement checking whether the source URef has read rights; otherwise, revert.",
+      "description_summary": "Mint::transfer does not verify read rights for the source URef, allowing unauthorized access."
+    },
+    {
+      "title": "Malicious Validators Could Impersonate the System Account Role",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": null,
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "QSP-8 Malicious Validators Could Impersonate the System Account Role\nSeverity: Low Risk\nStatus: Unresolved\nDescription: A malicious node could impersonate the system role by changing the underlying source code; for it to have a meaningful impact on the network, the attacker would have to spin up many nodes and stake on all of them (not necessarily economically viable). If that happens, consensus could be compromised and tokens could be minted out of thin air.\nRecommendation: From a technical perspective, the issue could be largely mitigated by making the code close-sourced; one would have to rely on signed and pre-compiled statically linked executables with obfuscated code. However, such an approach defeats the decentralized philosophy of the project, not to mention the ability to have the code audited by the community at large. We DO NOT recommend anything in that direction. The current economic incentives in place are likely to discourage such an attack. Nonetheless, make sure to monitor such incentives and network behavior over time.",
+      "description_summary": "Malicious validators could impersonate the system account role, risking consensus and token integrity."
+    },
+    {
+      "title": "Many Purses Could Be Created With Zero Amount (Exhaustion Attack)",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/mint/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Denial of Service (DoS) and Spamming",
+      "description": "QSP-9 Many Purses Could Be Created With Zero Amount (Exhaustion Attack)\nSeverity: Low Risk\nStatus: Acknowledged\nFile(s) affected: types/src/system/mint/mod.rs\nDescription: The Mint::mint of zero motes creates a purse, which increases storage.\nExploit Scenario: An attacker creates a large amount of purses as a means to exhaust storage resources.\nRecommendation: Make sure the cost of creating an empty purse disincentivizes malicious users in creating a large number of purses.",
+      "description_summary": "Mint::mint allows creation of zero-mote purses, enabling potential storage exhaustion attacks."
+    },
+    {
+      "title": "MAX_PAYMENT is in Motes Rather than Gas",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": null,
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "QSP-10 MAX_PAYMENT is in Motes Rather than Gas\nSeverity: Low Risk\nStatus: Unresolved\nDescription: If gas prices increase, the viability of more sophisticated payment options (or, in extreme cases, even the standard payment contract), may be compromised.\nExploit Scenario: Measure MAX_PAYMENT in units of gas instead.",
+      "description_summary": "MAX_PAYMENT is measured in motes rather than gas, risking viability with increasing gas prices."
+    },
+    {
+      "title": "get_refund_purse Does Not Grant Read Rights",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/handle_payment/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "QSP-11 get_refund_purse Does Not Grant Read Rights\nSeverity: Low Risk\nStatus: Unresolved\nFile(s) affected: types/src/system/handle_payment/mod.rs\nDescription: The HandlePayment::get_refund_purse strips all access rights prior to returning the refund purse. This seems too strict, as one will not even be able to read the purse.\nRecommendation: Give read access rights to the refund purse being returned.",
+      "description_summary": "HandlePayment::get_refund_purse removes all access rights, preventing read access to the refund purse."
+    },
+    {
+      "title": "Unexpected Arguments in transfer-to-account-stored",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/handle_payment/mod.rs",
+          "lines": [35, 39, 44, 48]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Code Quality",
+      "description": "QSP-12 Unexpected Arguments in transfer-to-account-stored\nSeverity: Low Risk\nStatus: Unresolved\nDescription: transfer-to-account-u512-stored, at L48, calls a new_contract in its final step of the store() function, and uses parameters Some(...) for hash_name and uref_name. Yet in the nearly identical transfer-to-account-stored (L44), None is used instead. Similarly in the former declaration of the EntryPoint, the CLType::Unit is used (L39) as a parameter, but in the latter, CLType::URef (L35) is used instead.\nRecommendation: Clarify the matter with better documentation in the code; furthermore, we suspect that transfer-to-account-stored is deprecated and could be safely removed.",
+      "description_summary": "Inconsistent arguments and types used in transfer-to-account-stored and transfer-to-account-u512-stored."
+    },
+    {
+      "title": "Delegation Rate Reset May Not Benefit Delegators",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": null,
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "QSP-13 Delegation Rate Reset May Not Benefit Delegators\nSeverity: Low Risk\nStatus: Unresolved\nDescription: Validators can change the delegation rate whenever they change their bid; delegators who staked on the validator prior to the delegation rate change may now receive a lower cut if the delegation rate increases.\nRecommendation:\n• Make sure the issue is properly communicated to users; and/or\n• Disable delegate rate changes within an era.",
+      "description_summary": "Delegation rate changes may reduce rewards for existing delegators if rates increase."
+    },
+    {
+      "title": "Payment Purse Invariant May Not Hold",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/handle_payment/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Undetermined",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "QSP-14 Payment Purse Invariant May Not Hold\nSeverity: Undetermined\nStatus: Unresolved\nFile(s) affected: types/src/system/handle_payment/mod.rs\nDescription: According to the comment in the code, the finalize function \"maintains the invariant that the balance of the payment purse is zero at the beginning and end of each deploy and that the refund purse is unset at the beginning and end of each deploy\". However, once the constant REFUND_PERCENTAGE is eventually set to a positive value (currently hardcoded as zero), the invariant may not always hold, as the refund or the reward purse could be the same as the payment purse.\nRecommendation: Return an error if either the refund purse or the reward purse are the same as the payment purse.",
+      "description_summary": "Payment purse invariant may not hold if refund or reward purse matches the payment purse."
+    },
+    {
+      "title": "add_bid Can Be Called By Non-Genesis Validators",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/auction/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Undetermined",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "QSP-15 add_bid Can Be Called By Non-Genesis Validators\nSeverity: Undetermined\nStatus: Acknowledged\nFile(s) affected: types/src/system/auction/mod.rs\nDescription: The header comments for the add_bid function states the following:\n\"For a non-founder validator, this adds, or modifies, an entry in the `bids` collection and calls `bond` in the Mint contract to create (or top off) a bid purse. It also adjusts the delegation rate.\"\nNote that nothing is stated for founder validators. Hence, it is unclear what the expected behavior should be. Our interpretation is that the function should revert with an error if called by a founding validator. As that is not the case, we cannot determine what happens as a consequence.\nRecommendation: If not an issue, add better documentation to the code as a means to clarify the intended behavior. If an issue, then restrict the add_bid function s.t. it can only be called by non-founding validators.\nUpdate: The team improved the header comment in the add_bid function to clarify that it can be called by both founder and non-founder validators.",
+      "description_summary": "Unclear behavior of add_bid function when called by founding validators, potentially leading to unintended consequences."
+    },
+    {
+      "title": "Unclear Vesting Initialization",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/auction/bid/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Undetermined",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Code Quality",
+      "description": "QSP-16 Unclear Vesting Initialization\nSeverity: Undetermined\nStatus: Unresolved\nFile(s) affected: types/src/system/auction/bid/mod.rs\nDescription: Currently, the process function returns true if the bid vesting is initialized or if at least one delegation vesting is initialized. This is not, however, what the function's header comment suggests: \"Returns true if the provided bid's vesting schedule was initialized.\". We cannot determine if the code reflects the intended behavior, nor the consequences in the case of a mismatch.\nRecommendation: Verify that the implemented code does reflect the intended behavior; if so, adjust the header comment accordingly. Otherwise, adjust the code to reflect the current comment.",
+      "description_summary": "The process function's behavior and header comment regarding vesting initialization are inconsistent."
+    },
+    {
+      "title": "Unbonding Does Not Lock Tokens For 24h",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/auction/detail.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Undetermined",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "QSP-17 Unbonding Does Not Lock Tokens For 24h\nSeverity: Undetermined\nStatus: Unresolved\nFile(s) affected: types/src/system/auction/detail.rs\nDescription: Following the specification, \"for security purposes, whenever a token is un-staked or un-delegated, the protocol will continue to keep the token locked for 1 day\". When processing unbonding requests (see process_unbond_requests), the logic is to proceed with the transfer iff current_era_id >= unbonding_purse.era_of_creation() + unbonding_delay. However, unbonding_delay is set to 14 eras in production, as given in resources/production/chainspec.toml. Since an era lasts 30 minutes, that equates to 14 x 30 = 420 minutes = 7 hours. Hence, the 24h lock period is not enforced in the code.\nRecommendation: Make sure the implemented code has the intended behavior; if so, change the docs accordingly. Otherwise, if the code behavior is to enforce the 24h lock period, change the chainspec unbonding_delay to 48 eras (48 x 30 = 1440 min = 24h).",
+      "description_summary": "Unbonding delay is set to 7 hours instead of the specified 24-hour lock period."
+    },
+    {
+      "title": "Potential Excess of Validators",
+      "repository": "https://github.com/CasperLabs/casper-node",
+      "audited_commit": "cb1d20ad1ea6e245cd8237f9406885a1e785c669",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "types/src/system/auction/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Undetermined",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "QSP-18 Potential Excess of Validators\nSeverity: Undetermined\nStatus: Unresolved\nFile(s) affected: types/src/system/auction/mod.rs\nDescription: If the number of validator slots is less than the number of founding validators, function auction::Auction::run_auction will return more validators than the number of validator slots (it will return the list of founding validators). The consequences of the latter are unclear to us.\nRecommendation: Clarify what would happen if the issue happens; for instance, by adding better documentation at the code level.",
+      "description_summary": "Auction::run_auction may return more validators than the number of available slots, causing unclear consequences."
+    }
+  ]
+}
