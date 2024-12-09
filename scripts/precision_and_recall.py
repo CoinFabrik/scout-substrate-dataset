@@ -106,6 +106,8 @@ if __name__ == "__main__":
         for finding in data_in:
             project = finding.get("project_name","")
             repository = finding.get("repository","")
+            if repository and not repository.endswith(".git"):
+                repository += ".git"
             # commit: use reported_remediated_commit if not null else audited_commit
             commit = finding.get("reported_remediated_commit")
             if not commit:
