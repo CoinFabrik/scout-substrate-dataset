@@ -6,7 +6,7 @@
   "findings": [
     {
       "title": "TCR voting design should be improved",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": null,
       "location": null,
@@ -20,7 +20,7 @@
     },
     {
       "title": "Denomination logic should be improved",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "2db8b4707606bf88b8fdefbe616d67a720e434ea",
       "location": [
@@ -39,7 +39,7 @@
     },
     {
       "title": "Emergency shutdown not used in critical functions",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": null,
       "location": [
@@ -58,7 +58,7 @@
     },
     {
       "title": "Missing sanity checks",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "2db8b4707606bf88b8fdefbe616d67a720e434ea",
       "location": [
@@ -77,7 +77,7 @@
     },
     {
       "title": "Vesting to yourself is allowed",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "91cfe0cb3300811bb02a47c4cf70f68c7e48f94d",
       "location": [
@@ -96,7 +96,7 @@
     },
     {
       "title": "Missing zero value check",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "f31c19a06ab0047f0c533c83ba67654eedfa6147",
       "location": [
@@ -115,7 +115,7 @@
     },
     {
       "title": "Vesting schedules less than a current block can be created",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": null,
       "location": null,
@@ -129,7 +129,7 @@
     },
     {
       "title": "Redundant check",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "91cfe0cb3300811bb02a47c4cf70f68c7e48f94d",
       "location": [
@@ -148,7 +148,7 @@
     },
     {
       "title": "Redundant variable",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "91cfe0cb3300811bb02a47c4cf70f68c7e48f94d",
       "location": [
@@ -167,7 +167,7 @@
     },
     {
       "title": "Usage of vulnerable crates",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": null,
       "location": null,
@@ -181,7 +181,7 @@
     },
     {
       "title": "Outdated Rust edition",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "41ce7de56ff6dd701de1f5d247c91aaff6803954",
       "location": [
