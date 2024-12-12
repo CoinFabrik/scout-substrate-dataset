@@ -1,0 +1,84 @@
+{
+  "audited_project_id": 19,
+  "project_name": "Astar",
+  "auditor": "Quantstamp",
+  "audit_link": "https://certificate.quantstamp.com/full/a-star-network-staking.pdf",
+  "findings": [
+    {
+      "title": "Potential segfault in localtime_r invocations",
+      "repository": "https://github.com/PlasmNetwork/Astar",
+      "audited_commit": "6d8c38a0c3a9f7d24e0f11cab2fff65c0e5558ec",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "Cargo.lock",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "SWC-RUSTSEC-2020-0159",
+      "vulnerability_class_scout": "Dependency",
+      "description": "QSP-1 Potential segfault in localtime_r invocations\nSeverity: Medium Risk\nStatus: Acknowledged\nFile(s) affected: Cargo.lock\nRelated Issue(s): SWC-RUSTSEC-2020-0159\nDescription: In the Cargo.lock file the package chrono with the version 0.4.19 is used, in fact this version is affected by a data race between localtime_r and setenv. You can refer to more details of the vulnerability in the following link: https://rustsec.org/advisories/RUSTSEC-2020-0159\nRecommendation: The team should update the chrono version to the latest version.",
+      "description_summary": "Potential segfault in localtime_r invocations due to a data race in chrono 0.4.19."
+    },
+    {
+      "title": "Mathematical Operations That Lead To Overflow",
+      "repository": "https://github.com/PlasmNetwork/Astar",
+      "audited_commit": "6d8c38a0c3a9f7d24e0f11cab2fff65c0e5558ec",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "/frame/dapps-staking/src/pallet/mod.rs",
+          "lines": [244, 393, 408, 413, 549, 552, 593, 683]
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Arithmetic",
+      "description": "QSP-2 Mathematical Operations That Lead To Overflow\nSeverity: Medium Risk\nStatus: Fixed\nFile(s) affected: /dapps-staking/src/pallet/mod.rs\nDescription: In the on_initialize function (file /dapps-staking/src/pallet/mod.rs, L244), the next_era variable is incremented using the + operator, which can cause an overflow. If one uses the debug build, it can cause a panic; however, in release build it will overflow silently. Same issue in lines 393, 408, 413, 549, 552, 593, 683\nRecommendation:\n• Instead of using the + operator, we recommend using the checked_add function to prevent an overflow.\n• Instead of using the x operator, we recommend using the checked_mul function to prevent an overflow.\nUpdate: The team has fixed all the issues except for the era index overflow and number of stakers overflow since these scenarios aren't feasible.",
+      "description_summary": "Overflow risk in mathematical operations using the + operator in on_initialize function."
+    },
+    {
+      "title": "Missing Validation In Some Variables",
+      "repository": "https://github.com/PlasmNetwork/Astar",
+      "audited_commit": "6d8c38a0c3a9f7d24e0f11cab2fff65c0e5558ec",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "/frame/dapps-staking/src/pallet/mod.rs",
+          "lines": [327, 390, 578]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "QSP-3 Missing Validation In Some Variables\nSeverity: Low Risk\nStatus: Fixed\nFile(s) affected: dapps/src/pallet/mod.rs\nDescription:\n• In dapps/src/pallet/mod.rs (L327): the unregister function executes a loop N times such that N is the length of the stakers. The problem here is that there is no limit on the length of this variable, which can cause a denial of service during the execution of this function call. Same issue in line 578\n• In dapps/src/pallet/mod.rs (L390): the bond_and_stake function verifies if the value value_to_stake is equal to Zero value; if it's the case, the transaction reverts. This verification is not sufficient; we should enforce it by verifying if the value_to_stake is greater than 0.\nRecommendation:\n* Enforce a limitation on the number of the stakers.\n• Verify if value_to_stake is greater than the zero value.\nUpdate:\n* The number of stakers is limited by a configurable constant.\n• The team did the verification using value_to_stake > Zero::zero()",
+      "description_summary": "Missing validation for stakers length and value_to_stake, leading to potential denial of service."
+    },
+    {
+      "title": "Order of Validation in Maximum Number of Stakers",
+      "repository": "https://github.com/PlasmNetwork/Astar",
+      "audited_commit": "6d8c38a0c3a9f7d24e0f11cab2fff65c0e5558ec",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "/frame/dapps-staking/src/pallet/mod.rs",
+          "lines": [400]
+        }
+      ],
+      "reported_impact": "Informational",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "QSP-4 Order of Validation in Maximum Number of Stakers\nSeverity: Informational\nStatus: Fixed\nDescription: In the bond_and_stake function (L400), after updating the ledger value and getting the latest era staking point the number of stakers is verified if it is less than the maximum number of stakers. If it's not the case, the transaction will revert. This verification should be done before updating the ledger value.\nRecommendation: The team should verify if we exceed the MaxNumberOfStakersPerContract before setting any variables or doing calculations.",
+      "description_summary": "Validation of maximum number of stakers occurs after updating ledger values, risking improper transactions."
+    }
+  ]
+}

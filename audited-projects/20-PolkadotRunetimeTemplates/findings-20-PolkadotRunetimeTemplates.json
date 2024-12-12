@@ -1,0 +1,84 @@
+{
+  "audited_project_id": 20,
+  "project_name": "PolkadotRunetimeTemplates",
+  "auditor": "Security Research Labs",
+  "audit_link": "https://github.com/OpenZeppelin/polkadot-runtime-templates/blob/main/audits/2024-04.pdf",
+  "findings": [
+    {
+      "title": "Runtime template waives XCM message delivery fees",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": "83a7448addb1c67e633d0160e8ca2db80ef79e08",
+      "location": [
+        {
+          "file_path": "runtime/src/xcm_configs.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Critical",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Denial of Service (DoS) and Spamming",
+      "description": "3.2.1 Runtime template waives XCM message delivery fees\nAn attacker can cause network congestion causing delay in message deliveries or discards and storage exhaustions.\n\nTo avoid congestion and spamming of messages in the network via XCM, a fee is charged for message delivery to ensure fairness and optimal message delivery time amongst all the participants. This fee is configured in the runtime construct through use of FeeManager type.\n\nIn the template for XCM runtime configuration for OpenZeppelin, the FeeManager was set to the Rust unit type \"()\". In the Polkadot-SDK, this implementation effectively waives the delivery fees.\n\nThereby all fee-based congestion control mechanisms become ineffective since the fees are not actually charged. An attacker can cause congestion, possibly leading to long delays in message delivery, storage exhaustion and/or dropping of messages.\n\nRecommendation: Implement a fee for XCM message delivery and follow the fix implemented in the runtime update v1.3.",
+      "description_summary": "The runtime waives XCM message delivery fees, enabling attackers to cause network congestion and storage exhaustion."
+    },
+    {
+      "title": "No XCM delivery fees configured for sibling parachain messages",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": "f3eedbce767f0b1eb4431cd2559a1c74f9b37786",
+      "location": [
+        {
+          "file_path": "runtime/src/lib.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Denial of Service (DoS) and Spamming",
+      "description": "3.2.2 No XCM delivery fees configured for sibling parachain messages\nAttackers may send spam messages across chains without paying a fee.\n\nTo ensure fairness among users and prevent spamming of messages across chains, an adequate fee mechanism must be implemented for sending the XCM message.\n\nCurrently, there are no fees charged for delivering XCM messages across parachains. In the template runtime configuration, this is configured through PriceForSiblingDelivery by NoPriceForMessageDelivery.\n\nAttackers may send spam messages across chains without paying a fee. Excessive messages could lead to XCM queue size exhaustion by excessive storage usage until messages are delivered. This could also lead to delays in message delivery for other users.\n\nRecommendation: Charge adequate message delivery fees in the runtime configuration template. To prevent excessive delivery times and storage exhaustion, an exponential fee mechanism should be used as configured in Kusama.",
+      "description_summary": "No XCM delivery fees allow attackers to spam sibling parachains, causing queue exhaustion and delays."
+    },
+    {
+      "title": "Incorrect runtime weights for XCM and the Message Queue pallet",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": "56f18ec275e3a442c91c67d0257a401f9e8e5c6a",
+      "location": [
+        {
+          "file_path": "runtime/src/xcm_configs.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Weight Management",
+      "description": "3.2.3 Incorrect runtime weights for XCM and the Message Queue pallet\nAs these pallet extrinsic weights are not dependent on the actual runtime configuration, this could lead to underweight extrinsics.\n\nOpenZeppelin’s runtime template constructs runtime logics with FRAME pallets in its configuration. Appropriate benchmarking is required for these pallets to ensure its actual runtime performance. This will effectively transform into charging adequate fees for extrinsics execution.\n\nFor example, the runtime weights for pallet XCM are configured using TestWeightInfo. Similarly, for Generalized Message Queue, runtime weights are configured to be Zero as type WeightInfo = ().\n\nAs these pallet extrinsic weights are not dependent on the actual runtime configuration, this could lead to underweighted extrinsics. Setting the weights to () effectively makes it a zero-cost execution for extrinsics. Both scenarios lead to attackers spamming and bloating the network storage for free.\n\nRecommendation: All pallet extrinsics, even the Substrate ones, should be benchmarked with the actual runtime configuration by including them in the define_benchmarks! block. A best practice example can be found in the Kusama runtime implementation.",
+      "description_summary": "Incorrect runtime weights allow zero-cost extrinsics, enabling spamming and network storage bloat."
+    },
+    {
+      "title": "Insufficient benchmarking for runtime pallets",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": "48c6220a4e60d7dcf01c890ff37c81b5bd22d00d",
+      "location": [
+        {
+          "file_path": "runtime/src.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Weight Management",
+      "description": "3.2.4 Insufficient benchmarking for runtime pallets\nMissing or incorrect runtime benchmarks result in overweight or underweight extrinsics. This can lead to low-effort attacks such as spamming, storage bloating, and block stalling.\n\nPallets with extrinsics must have an accurate weight function which factors in storage, database access, and computation. The reuse of the substrate template and failing to benchmark weights may result in a mismatch of computational requirements and the cost of execution.\n\nSome pallets use pre-defined weights in the runtime configuration but are not included in the runtime benchmarks. The pallets affected are:\n- cumulus_pallet_parachain_system\n- parachain_info\n- pallet_proxy\n- pallet_utility\n- pallet_multisig\n- pallet_transaction_payment\n- pallet_xcm\n\nAdditionally, the benchmarks for all the pallets are using SubstrateWeights, which were benchmarked according to the substrate-node template, instead of the actual template runtime.\n\nExcluding pallets with configured weights from benchmarking and using the substrate-node template runtime weights may result in overweight or underweight extrinsics in the runtime environment. This potentially leads to low-effort attacks such as spamming, storage bloating, and block stalling when invoking extrinsics.\n\nRecommendation: Include the above-mentioned pallets in the try_benchmarks! macro for appropriate runtime benchmarks. Fix all the default benchmarking with actual runtime; please refer to the Glutton-Kusama parachain as a best practice example.",
+      "description_summary": "Insufficient benchmarking results in overweight or underweight extrinsics, enabling spamming and block stalling."
+    }
+  ]
+}
