@@ -17,7 +17,7 @@
       "vulnerability_class_scout": "Dependency",
       "description": "5.1 Need to upgrade the module [low-risk]\nID:RUSTSEC-2021-0067\nCrate:cranelift-codegen\nVersion: 0.71.0\nDate:2021-05-21\nURL:https://rustsec.org/advisories/RUSTSEC-2021-0067\nTitle: Memory access due to code generation flaw in Cranelift module\nSolution: upgrade to >= 0.73.1 OR >= 0.74\nDependency tree: cranelift-codegen 0.71.0\nFixed in: https://github.com/parallel-finance/parallel/pull/210",
       "description_summary": "Memory access vulnerability in Cranelift module due to code generation flaw, fixed by upgrading to >= 0.73.1 or >= 0.74.",
-      "reported_status": "Fixed",
+      "reported_status": "Fixed in: https://github.com/parallel-finance/parallel/pull/210",
       "is_substrate_finding": true
     },
     {
@@ -38,7 +38,7 @@
       "vulnerability_class_scout": "Arithmetic",
       "description": "5.2 Numeric overflow[enhancement]\nparallel/pallets/loans/src/lib.rs\nlet total_reserves_new = total_reserves - reduce_amount;\n//...snip code...//\nlet total_reserves_new = total_reserves + add_amount;\nIt is recommended to use `checked_add/checked_sub` to prevent numerical overflow.\nFixed in: https://github.com/parallel-finance/parallel/pull/241",
       "description_summary": "Numeric overflow vulnerability due to lack of checked_add/checked_sub, fixed by adding these methods.",
-      "reported_status": "Fixed",
+      "reported_status": "Fixed in: https://github.com/parallel-finance/parallel/pull/241",
       "is_substrate_finding": true
     },
     {
@@ -59,7 +59,7 @@
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "5.3 Lack of bounds checking[weakness]\n`mint_amount` has no boundary limit, it is recommended to enhance.\nFixed in: https://github.com/parallel-finance/parallel/pull/258",
       "description_summary": "Lack of bounds checking for mint_amount, recommended to enhance.",
-      "reported_status": "Fixed",
+      "reported_status": "Fixed in: https://github.com/parallel-finance/parallel/pull/258",
       "is_substrate_finding": true
     },
     {
