@@ -35,20 +35,29 @@ For access to the complete codebase associated with this dataset, including tagg
 
 This dataset currently contains the following audited Substrate projects:
 
-| Audited Project ID | Project Name  | Auditor                |
-| ------------------ | ------------- | ---------------------- |
-| 1                  | Parallel      | Trail of Bits          |
-| 2                  | Parallel      | SlowMist               |
-| 3                  | Ava Protocol  | Slow Mist              |
-| 5                  | Nodle         | Halborn                |
-| 6                  | Reef Chain    | Halborn                |
-| 7                  | Manta Network | Veridise               |
-| 8                  | Manta Network | Halborn                |
-| 9                  | Manta Network | Veridise               |
-| 10                 | Astar         | Security Research Labs |
-| 11                 | Astar         | Zellic                 |
+| Audited Project ID | Project Name            | Auditor                |
+| ------------------ | ----------------------- | ---------------------- |
+| 1                  | Parallel                | Trail of Bits          |
+| 2                  | Parallel                | Slow Mist              |
+| 3                  | Ava Protocol            | Slow Mist              |
+| 4                  | Pendulum                | Hacken                 |
+| 5                  | Nodle                   | Halborn                |
+| 6                  | Reef Chain              | Halborn                |
+| 7                  | Manta Network           | Veridise               |
+| 8                  | Manta Network           | Halborn                |
+| 9                  | Manta Network           | Veridise               |
+| 10                 | Astar                   | Security Research Labs |
+| 11                 | Astar                   | Zellic                 |
+| 12                 | Bifrost                 | Oak Security           |
+| 13                 | HydraDX                 | Security Research Labs |
+| 14                 | LAOS                    | CoinFabrik             |
+| 15                 | GableFinance            | Hacken                 |
+| 16                 | NEAR                    | Hacken                 |
+| 17                 | Acala                   | Trail of Bits          |
+| 18                 | Astar                   | Quantstamp             |
+| 19                 | Astar                   | Quantstamp             |
+| 20                 | PolkadotRuntimeTemplates | Security Research Labs |
 
-More projects will be added as new audits are analyzed.
 
 ## Substrate Issue Classes
 
