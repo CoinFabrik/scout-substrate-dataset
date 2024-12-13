@@ -16,7 +16,9 @@
       "vulnerability_class_audit": "Coding Mistakes",
       "vulnerability_class_scout": "Weight Management",
       "description": "All the assets pallet functions exposed by the chain extension are weighted with a constant amount. The weight of some operations is charged using the same quantity that the assets pallet benchmarks have computed. However, other operations only charge the weight of one runtime database read operation \u2014 T::DbWeight::get().reads(1_u64).\nTwo functions, MetadataSymbol and MetadataName, operate on a variable amount of data, but they also only account for one runtime database read operation.",
-      "description_summary": "Constant weight for functions, ignores variable data in MetadataSymbol & MetadataName."
+      "description_summary": "Constant weight for functions, ignores variable data in MetadataSymbol & MetadataName.",
+      "reported_status": "The Astar team acknowledged this issue and stated that the gas weight currently being charged for one read is equivalent to a read of length 80 bytes. They also pointed out that the MetadataName and MetadataSymbol are bounded by the AssetsStringLimit config variable, which is set to 50 bytes. Therefore, charging for one read is fine in this instance.",
+      "is_substrate_code": true
     }
   ]
 }
