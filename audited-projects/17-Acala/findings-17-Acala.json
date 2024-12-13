@@ -16,7 +16,9 @@
       "vulnerability_class_audit": "Configuration",
       "vulnerability_class_scout": "TBD",
       "description": "1. Insecure configuration for running Acala node in a Docker container\\nSeverity: Low\\nDifficulty: High\\nType: Configuration\\nFinding ID: TOB-ACA-001\\nTarget: documentation for running node in a Docker container\\n\\nDescription\\nThe Acala documentation describes how to launch an Acala node in a Docker container, from the acala/acala-node docker images. While those images run the node process as a non-root user, the documented way to run them does not prevent the user to gain more privileges. This may allow an attacker who gets code execution access within the container to escalate their privileges in certain scenarios.\\n\\nThe first docker invocation can be found at the integration-guide/node-management documentation page:\\n\\ndocker run -p 9944:9944 acala/acala-node:0.6.2 --name \\\"calling_home_from_a_docker_container\\\" --rpc-external --ws-external\\n\\nWhile the second at the network-maintainers/mandala-maintainers-guide page:\\n\\ndocker run -d --restart=always -p 30333:30333 -p 9933:9933 -p 9944:9944 -v node-data:/acala/data acala/acala-node:latest --chain mandala --base-path=/acala/data/01-001 --ws-port 9944 --rpc-port 9933 --port 30333 --ws-external --rpc-external --ws-max-connections 1000 --rpc-cors=all --unsafe-ws-external --unsafe-rpc-external --pruning=archive --name \\\"Name of Telemetry\\\"\\n\\nBoth of those invocations do not set the \\\"No New Privileges\\\" flag and do not drop all Linux capabilities. Those features prevent the user from gaining more privileges through e.g. suid binaries and from gaining more Linux capabilities. The current value of those settings can be inspected by reading the /proc/$PID/status file as shown in Figures 1.1 and 1.2, where the second figure shows those settings with security flags applied to the docker run invocation.\\n\\n$ docker run --rm -it --entrypoint bash acala/acala-node:latest acala@d7720fb273ce:/$ cat /proc/$$/status | egrep 'Cap|NoNewPrivs|Seccomp'\\nCapInh: 00000000a80425fb\\nCapPrm: 0000000000000000\\nCapEff: 0000000000000000\\nCapBnd: 00000000a80425fb\\nCapAmb: 0000000000000000\\nNoNewPrivs: 0\\nSeccomp: 2\\n\\nFigure 1.1: Inspecting the parent process (here: bash) Linux capabilities sets, the \\\"No New Privileges\\\" flag and its Seccomp status. While the process has no effective Linux capabilities (CapEff) currently, it may gain them through e.g. suid binaries.\\n\\n$ docker run --rm -it --cap-drop=ALL --security-opt=no-new-privileges:true --entrypoint bash acala/acala-node:latest acala@aeec10d88e66:/$ cat /proc/$$/status | egrep 'Cap|NoNewPrivs|Seccomp'\\nCapInh: 0000000000000000\\nCapPrm: 0000000000000000\\nCapEff: 0000000000000000\\nCapBnd: 0000000000000000\\nCapAmb: 0000000000000000\\nNoNewPrivs: 1\\nSeccomp: 2\\n\\nFigure 1.2: Inspecting the process status after passing in docker run flags which drops all Linux capabilities and sets the \\\"No New Privileges\\\" flag.\\n\\nExploit Scenario\\nAlice runs an Acala node in a Docker container. Eve finds a bug that allows her to run arbitrary code on Alice's node. She then uses the bug and runs a suid binary to gain more privileges in the container to attack the host system.\\n\\nCurrently, the only suid binaries present in the acala/acala-node:latest (93c46b70e208) image are /bin/mount, /bin/umount, /bin/su and /usr/lib/openssh/ssh-keysign. Analyzing these binaries was outside the scope of this assessment.\\n\\nRecommendations\\nShort term, add the \\\"--cap-drop=ALL --security-opt=no-new-privileges:true\\\" flags to all docker run invocations listed in the Acala documentation for running a node in a Docker container. This will increase the security of containers run by the users.\\n\\nLong term, consider using a multi-stage Docker image build for Acala docker image and adding only the necessary binaries to the resulting image. This will decrease the attack surface for an attacker who gains code execution in the container and should also result in smaller Docker images. Additionally, review the Appendix C: Docker Recommendations for further Docker guidance.",
-      "description_summary": "Docker containers are not configured with the 'No New Privileges' flag or dropped Linux capabilities, allowing privilege escalation."
+      "description_summary": "Docker containers are not configured with the 'No New Privileges' flag or dropped Linux capabilities, allowing privilege escalation.",
+      "reported_status": null,
+      "is_substrate_finding": false
     },
     {
       "title": "Sudo is enabled on the Acala chain",
@@ -35,7 +37,9 @@
       "vulnerability_class_audit": "Configuration",
       "vulnerability_class_scout": "Business Logic",
       "description": "2. Sudo is enabled on the Acala chain\\nSeverity: Informational\\nDifficulty: Medium\\nType: Configuration\\nFinding ID: TOB-ACA-002\\nTarget: Acala/bin/acala/service/src/chain_spec/acala.rs#L164\\n\\nDescription\\nThe Acala chain spec uses the sudo module (Figure 2.1), which allows for robust testing but should not exist in a production network. The existence of a sudo functionality, or, a lack of clear documentation of a sudo removal step may decrease the users' trust in the Acala Network.\\n\\nacala_runtime::GenesisConfig {\\n  // (...)\\n  pallet_sudo: Some(SudoConfig { key: root_key.clone() }),\\n}\\n\\nFigure 2.1: The sudo pallet enabled in Acala chain specification (Acala/bin/acala/service/src/chain_spec/acala.rs#L164).\\n\\nRecommendation\\nShort term, either remove the sudo functionality from the Acala chain specification or document how it will be disabled or removed after the network goes live, similarly to what Polkadot did during its launch.",
-      "description_summary": "The sudo module is enabled, which should not be present in a production network due to security concerns."
+      "description_summary": "The sudo module is enabled, which should not be present in a production network due to security concerns.",
+      "reported_status": null,
+      "is_substrate_finding": true
     },
     {
       "title": "Changed but unused liquidAmountToBurn value",
@@ -57,7 +61,9 @@
       "vulnerability_class_audit": "Undefined Behavior",
       "vulnerability_class_scout": "Code Quality",
       "description": "3. Changed but unused liquidAmountToBurn value\\nSeverity: Informational\\nDifficulty: High\\nType: Undefined Behavior\\nFinding ID: TOB-ACA-003\\nTarget: acala.js/packages/sdk-homa/src/staking-pool.ts\\n\\nDescription\\nThere are two places in the acala.js codebase where a variable of liquidAmountToBurn is introduced, used, changed but unused further in the flow (Figures 3.1-2). Those cases should be further investigated as they could be real bugs.\\n\\npublic getStakingAmountInRedeemByFreeUnbonded(/* (...) */): { /* (...) */ } {\\n  // (...)\\n  let liquidAmountToBurn = amount;\\n  let demandStakingAmount = liquidExchangeRate.times(liquidAmountToBurn);\\n  // (...)\\n  if (!demandStakingAmount.isZero() && !availableFreePool.isZero()) {\\n    if (demandStakingAmount.isGreaterThan(availableFreePool)) {\\n      const ratio = FixedPointNumber.fromRational(availableFreePool, demandStakingAmount);\\n      liquidAmountToBurn = ratio.times(liquidAmountToBurn);\\n      demandStakingAmount = availableFreePool;\\n    }\\n  }\\n  // (...) - the liquidAmountToBurn value is unused\\n}\\n\\nFigure 3.1: The getStakingAmountInRedeemByFreeUnbonded function (acala.js/packages/sdk-homa/src/staking-pool.ts#L165-L179).\\n\\npublic getStakingAmountInClaimUnbonding(/* (...) */): { /* (...) */ } {\\n  // (...)\\n  let liquidAmountToBurn = amount;\\n  let demandStakingAmount = liquidExchangeRate.times(liquidAmountToBurn);\\n  // (...)\\n  if (!demandStakingAmount.isZero() && !availableUnclaimedUnbonding.isZero()) {\\n    if (demandStakingAmount.isGreaterThan(availableUnclaimedUnbonding)) {\\n      const ratio = FixedPointNumber.fromRational(availableUnclaimedUnbonding, demandStakingAmount);\\n      liquidAmountToBurn = ratio.times(liquidAmountToBurn);\\n      demandStakingAmount = availableUnclaimedUnbonding;\\n    }\\n  }\\n  // (...) - the liquidAmountToBurn value is unused\\n}\\n\\nFigure 3.2: The getStakingAmountInClaimUnbonding function (acala.js/packages/sdk-homa/src/staking-pool.ts#L275-L289).\\n\\nRecommendation\\nShort term, evaluate the change of liquidAmountToBurn value in the getStakingAmountInRedeemByFreeUnbounded and getStakingAmountInClaimUnbonding functions in the acala.js codebase.",
-      "description_summary": "The variable liquidAmountToBurn is changed but remains unused, potentially indicating a bug."
+      "description_summary": "The variable liquidAmountToBurn is changed but remains unused, potentially indicating a bug.",
+      "reported_status": null,
+      "is_substrate_finding": false
     },
     {
       "title": "Transferring 'MAX' ACA tokens through Acala-dapp fails and only burns the fees",
@@ -71,10 +77,12 @@
       "vulnerability_class_audit": "Data Validation",
       "vulnerability_class_scout": "Business Logic",
       "description": "4. Transferring \"max\" ACA tokens through Acala-dapp fails and only burns the fees\\nSeverity: Low\\nDifficulty: Low\\nType: Data Validation\\nFinding ID: TOB-ACA-004\\nTarget: Acala / Acala-dapp\\n\\nDescription\\nThe Acala-dapp UI provides a way of transferring all tokens to a given account via the \"MAX\" button in its \"Transfer\" dialog (Figure 4.1). However, trying to perform a transfer of ACA tokens with the \"MAX\" amount always fails with a \"balances.InsufficientBalance\" result (Figure 4.2) and the sender ends up losing the transfer fees.\\n\\nFigure 4.1: The \"Transfer\" dialog with the \"MAX\" button.\\n\\nFigure 4.2: The \"balances.InsufficientBalance\" error displayed in the top right corner of Acala-dapp when attempting to transfer \"MAX\" ACA tokens amount.\\n\\nExploit Scenario\\nAlice wants to transfer all of her ACA tokens into another account. She uses the \"MAX\" transfer option through the Acala-dapp application. The transfer fails and Alice ends up with the transfer fees deducted from her ACA tokens balance.\\n\\nRecommendations\\nShort term, fix the inability of transferring \"MAX\" ACA tokens amount to another account through Acala-dapp. This can be done by adding a special \"transfer of all ACA tokens\" extrinsic that would first deduct the fees and then perform the transfer of the remaining tokens, and using that extrinsic when sending a \"MAX\" ACA tokens transfer in the Acala-dapp UI.\\n\\nLong term, add tests to ensure the \"MAX\" ACA and other tokens transfer succeeds. This will prevent similar bugs from appearing if the code changes. All financial transactions should be tested with both use cases and misuse cases.",
-      "description_summary": "Transferring the 'MAX' token amount fails, resulting in lost transfer fees."
+      "description_summary": "Transferring the 'MAX' token amount fails, resulting in lost transfer fees.",
+      "reported_status": null,
+      "is_substrate_finding": false
     },
     {
-      "title": "Outdated dependencies in the 'chaostests' framework contain security vulnerabilities",
+      "title": "The Substrate dependency 'chaostests' contain out of date dependencies that have security vulnerabilities",
       "repository": "https://github.com/AcalaNetwork/Acala",
       "audited_commit": "da5aeeafd0d0de1345f5693269cfd684d9058c36",
       "reported_remediated_commit": null,
@@ -90,7 +98,9 @@
       "vulnerability_class_audit": "Patching",
       "vulnerability_class_scout": "Dependency",
       "description": "5. The Substrate dependency \"chaostests\" contain out of date dependencies that have security vulnerabilities\\nSeverity: Informational\\nDifficulty: Undetermined\\nType: Patching\\nFinding ID: TOB-ACA-005\\nTarget: Acala's dependency substrate/.maintain/chaostests dependencies\\n\\nDescription\\nThe Substrate dependency version 6b600cdeb used by Acala uses two outdated dependencies that contain security vulnerabilities in its testing framework called \"chaostests\".\\n\\nThe outdated dependencies are:\\n- Node-fetch version 1.7.3, with a DoS vulnerability (CVE-2020-15168), fixed in 2.6.1.\\n- Node-forge version 0.8.5, with a prototype pollution vulnerability (CVE-2020-7720), fixed in 0.10.0.\\n\\nThe severity of this finding is set to Informational as we believe this issue does not impact the security of the Acala blockchain since the vulnerable code is not used by Acala code.\\n\\nRecommendations\\nShort term, update the Substrate dependency used in Acala to the latest version as its newer version doesn't contain the chaostests framework that contains security vulnerabilities in its dependencies.\\n\\nLong term, implement dependency checks for Acala's dependencies (and their dependencies) as part of the CI/CD pipeline of application development. Do not allow builds to continue with any outdated dependencies.",
-      "description_summary": "The 'chaostests' dependency includes outdated libraries with known security vulnerabilities."
+      "description_summary": "The 'chaostests' dependency includes outdated libraries with known security vulnerabilities.",
+      "reported_status": null,
+      "is_substrate_finding": true
     },
     {
       "title": "Lack of proper development guidance on using Acala-dapp with Acala",
@@ -104,7 +114,9 @@
       "vulnerability_class_audit": "Documentation",
       "vulnerability_class_scout": "Code Quality",
       "description": "6. Lack of proper development guidance on using Acala-dapp with Acala\\nSeverity: Informational\\nDifficulty: Undetermined\\nType: Documentation\\nFinding ID: TOB-ACA-006\\nTarget: Acala development documentation\\n\\nDescription\\nThe Acala Development Guide lacks proper documentation on how to use a local build of Acala-dapp and Acala node to test or develop the Acala blockchain. It is also not clear how to match the versions of the two, as the git commits that change corresponding dependencies versions are not having clear commit messages.\\n\\nIn Appendix D we describe steps for testing Acala and Acala-dapp with its test/development accounts (Alice, Bob, etc.) that could be added to the development guide.\\n\\nRecommendations\\nShort term, add steps for testing Acala and Acala-dapp locally with blockchain test/development accounts (Alice, Bob, etc.) into Acala's README or/and Development Guide. This will help developers to bootstrap a working environment and test features faster.",
-      "description_summary": "The development guide lacks clear steps for testing and matching dependencies between components."
+      "description_summary": "The development guide lacks clear steps for testing and matching dependencies between components.",
+      "reported_status": null,
+      "is_substrate_finding": false
     },
     {
       "title": "CSRF in Acala/apps settings which allows changing the RPC endpoint URL",
@@ -118,7 +130,9 @@
       "vulnerability_class_audit": "Data Validation",
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "7. CSRF in Acala/apps settings which allows changing the RPC endpoint URL\\nSeverity: Informational\\nDifficulty: Medium\\nType: Data Validation\\nFinding ID: TOB-ACA-007\\nTarget: Acala/apps\\n\\nDescription\\nThere is a Cross-Site Request Forgery (CSRF) vulnerability in the settings page of the polkadot.js/apps project on which the Acala/apps project is based upon. This allows an attacker to send a malicious link to the victim, which will change the victim's RPC endpoint URL.\\n\\nThe issue has been reported to the upstream repository in polkadot.js/apps#4465.\\n\\nRecommendations\\nShort term, fix the CSRF issue in Acala/apps which was reported in polkadot.js/apps#4465. This will prevent an attacker from sending a malicious link to its victim that will change the RPC endpoint URL. If possible, send a patch that fixes this issue to the upstream repository.\\n\\nLong term, keep track of the polkadot.js/apps changes and update the Acala/apps repository regularly. This will help prevent similar issues to occur in the future.",
-      "description_summary": "CSRF vulnerability allows changing the RPC endpoint URL via a malicious link."
+      "description_summary": "CSRF vulnerability allows changing the RPC endpoint URL via a malicious link.",
+      "reported_status": null,
+      "is_substrate_finding": false
     },
     {
       "title": "Missing security-related HTTP headers in the Acala-dapp application",
@@ -132,7 +146,9 @@
       "vulnerability_class_audit": "Configuration",
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "8. Missing security-related HTTP headers in the Acala-dapp application\\nSeverity: Low\\nDifficulty: High\\nType: Configuration\\nFinding ID: TOB-ACA-008\\nTarget: Acala/acala-dapp\\n\\nDescription\\nThe responses from the Acala-dapp website are missing the following security-related HTTP headers:\\n● Content-Security-Policy. The lack of this header could allow for an attacker to exploit XSS vulnerabilities that a CSP might otherwise mitigate.\\n● X-Frame-Options that can prevent the site from being rendered e.g. in an iframe and mitigates clickjacking attacks. Currently, if the site is rendered in an iframe, it won't work properly e.g. with the Polkadot{.js} extension as it doesn't work in iframes. The extension has an issue for it in polkadot-js/extension#531 and if it gets fixed, it will make Acala-dapp less secure due to lack of the X-Frame-Options setting.\\n\\nExploit Scenario\\nEve finds a bug in Acala-dapp which allows her to trigger an XSS attack on Alice's browser when she executes an action. Eve then prepares a custom-crafted XSS payload. Due to a lack of CSP header, Alice's browser executes Eve’s attack and Eve executes actions on behalf of Alice's account.\\n\\nRecommendation\\nShort term, add the missing security-related HTTP headers to Acala-dapp. Prevent the site from being rendered in iframes with X-Frame-Options: DENY header and implement the CSP policy and validate it with a CSP Evaluator. This will help mitigate the effects of attacks such as clickjacking or XSS.\\n\\nLong term, track the further developments of CSP and similar web browser features that help with mitigating security risk. As new protections are developed, ensure they are adopted as quickly as possible.\\n\\nReferences\\n● Mozilla developer docs: Content Security Policy\\n● CSP evaluator from Google",
-      "description_summary": "Missing HTTP headers such as Content-Security-Policy and X-Frame-Options allow XSS and clickjacking attacks."
+      "description_summary": "Missing HTTP headers such as Content-Security-Policy and X-Frame-Options allow XSS and clickjacking attacks.",
+      "reported_status": null,
+      "is_substrate_finding": false
     },
     {
       "title": "Small amounts are not displayed in Acala-dapp or are displayed in a scientific notation",
@@ -146,7 +162,9 @@
       "vulnerability_class_audit": "Undefined Behavior",
       "vulnerability_class_scout": "Code Quality",
       "description": "9. Small amounts are not displayed in Acala-dapp or are displayed in a scientific notation\\nSeverity: Informational\\nDifficulty: Low\\nType: Undefined Behavior\\nFinding ID: TOB-ACA-009\\nTarget: Acala/acala-dapp\\n\\nDescription\\nThe Acala-dapp presents small amounts of values in a scientific notation (Figures 9.1-2) and if a value is too small, e.g. 0.00000001 it may not be presented at all (Figure 9.2). This behavior may be confusing for users who don't understand the rules of displaying the values present in the system.\\n\\nFigure 9.1: Small amount is displayed in a scientific notation.\\n\\nFigure 9.2: While the account has 0.00000001 XBTC which can be seen by trying to transfer \\\"MAX\\\" XBTC tokens, the UI does not have an option to display this value at all.\\n\\nRecommendations\\nShort term, change the way small values are displayed in the Acala-dapp. Allow the user to specify the amount of decimal places to be displayed and inform the user if they have a small, non-zero value of a given token which is not currently displayed.\\n\\nLong term, add tests to Acala-dapp to see if it allows the user to see a small amount of tokens.",
-      "description_summary": "Small token values are not displayed or are shown in scientific notation, causing potential user confusion."
+      "description_summary": "Small token values are not displayed or are shown in scientific notation, causing potential user confusion.",
+      "reported_status": null,
+      "is_substrate_finding": false
     },
     {
       "title": "Providing too small value renders Acala-dapp unresponsive",
@@ -160,7 +178,9 @@
       "vulnerability_class_audit": "Denial of Service",
       "vulnerability_class_scout": "Denial of Service (DoS) and Spamming",
       "description": "10. Providing too small value renders Acala-dapp unresponsive\\nSeverity: Informational\\nDifficulty: Low\\nType: Denial of Service\\nFinding ID: TOB-ACA-010\\nTarget: Acala/acala-dapp\\n\\nDescription\\nPassing in a too small value into the \\\"Receive\\\" form field in the \\\"Swap\\\" tab renders the Acala-dapp application unresponsive. This prevents the user from performing an action which is valid within the system.\\n\\nThis can be reproduced by going to the \\\"Swap\\\" tab, choosing e.g. the XBTC currency and pasting in the \\\"0.000000001\\\" (or smaller) value into the \\\"Receive\\\" form as shown in Figure 10.1.\\n\\nFigure 10.1: Providing a too small value into the \\\"Receive\\\" field caused the page to hang.\\n\\nRecommendations\\nShort term, fix the unresponsiveness of Acala-dapp when a small number is provided into the \\\"Receive\\\" form of the \\\"Swap\\\" functionality.\\n\\nLong term, add functional tests against forms in Acala-dapp to see if they correctly handle small values or malicious inputs.",
-      "description_summary": "Providing too small a value causes the application to become unresponsive; fixing this requires updating input validation in the 'Receive' form of the 'Swap' functionality."
+      "description_summary": "Providing too small a value causes the application to become unresponsive; fixing this requires updating input validation in the 'Receive' form of the 'Swap' functionality.",
+      "reported_status": null,
+      "is_substrate_finding": false
     },
     {
       "title": "Documentation is incomplete",
@@ -174,7 +194,9 @@
       "vulnerability_class_audit": "Documentation",
       "vulnerability_class_scout": "Code Quality",
       "description": "11. Documentation is incomplete\nSeverity: Informational\nDifficulty: High\nType: Documentation\nFinding ID: TOB-ACA-011\nTarget: documentation\n\nDescription:\nSeveral areas of the Acala system would benefit from more thorough documentation. Comprehensive documentation of the system's behaviour is important for informing users of how the system operates, onboarding new employees, as well as verifying correctness of functionality.\n\nThe following areas were identified that would benefit from improved documentation:\n- Governance processes, which are described both in the wiki and in a hackmd note but neither is comprehensive and there are some points of conflict.\n- The various network incentives managed by the incentives module.\n- Gas fees.\n\nExploit Scenario:\nBob joins Acala as a new developer. Unaware of the expected behavior of a particular module, he modifies system parameters as part of a pull request and introduces unexpected behavior into the system.\n\nRecommendation:\nShort term, expand and unify the documentation to better cover governance, incentives, and gas fees.\nLong term, regularly review public documentation to ensure it is kept up to date with the current system.",
-      "description_summary": "The system's documentation is incomplete, missing details on governance, incentives, and gas fees, which could lead to unexpected behavior."
+      "description_summary": "The system's documentation is incomplete, missing details on governance, incentives, and gas fees, which could lead to unexpected behavior.",
+      "reported_status": null,
+      "is_substrate_finding": false
     }
   ]
 }
