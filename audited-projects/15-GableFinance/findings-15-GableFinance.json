@@ -21,7 +21,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "Vulnerability Details\nF-2023-0151 - Owner could withdraw more than he has deposited as owner_liquidity - High\nDescription: The owner can provide funds to the flashloan pool in the form of a deposit, so that there is some liquidity in the protocol - as well as withdraw them. The functions owner_deposit_xrd and owner_withdraw_xrd are used for this purpose. An incorrect validation was found in the owner_withdraw_xrd function regarding the verification on whether the amount paid is equal to or less than the liquidity in the pool. There should be a check comparing the mentioned amount with the amount of liquidity deposited by the owner.\n\npub fn owner_withdraw_xrd(&mut self, amount: Decimal) -> Bucket {\n    // Ensure amount is positive\n    assert!(\n        amount > Decimal::ZERO,\n        \"Please withdraw an amount larger than 0\"\n    );\n    // Ensure amount is less or equal to liquidity provided by owner\n    assert!(\n        amount <= self.liquidity_pool_vault.amount(),\n        \"Please withdraw an amount smaller than or equal to {}\",\n        self.owner_liquidity\n    );\n}\n\nConsequently, if, via the claim_xrd function, there are more funds in the pool than the owner initially deposited, then he is able to withdraw all of them, even though they are not his property. This is possible because amounts and liquidity are based on values of the Decimal type, which can be negative. Then the contract will not return panic if owner_liquidity drops below zero, for example to 1000.\n\nAssets: flashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\nStatus: Fixed\nClassification\nSeverity: High\n\nRecommendations\nRemediation: owner_withdraw_xrd function should be adjusted so that assert is checking that the amount requested is equal to or less than the liquidity owned by the owner.\nResolution: The Finding was fixed in commit a3fe638.\n\nEvidences\nProof of Concept\nReproduce: Test shows that after the validator sends funds to the liquidity pool, the owner is able to withdraw 400 tokens more than they themselves deposited.\n\n#[test]\nfn owner_withdraws_more_than_deposited() -> Result<(), RuntimeError> {\n    //\n    let (mut env, mut flashloanpool) = setup_flashloan_pool()?;\n    let xrd_bucket: Bucket = env.with_auth_module_disabled(|env| {\n        // owner deposits 100 XRD\n        let rtn = ResourceManager(XRD).mint_fungible(100.into(), env);\n        let _ = flashloanpool.owner_deposit_xrd(rtn.unwrap(), env);\n        // validator sends 1000 XRD as staking rewards\n        let rtn2 = ResourceManager(XRD).mint_fungible(1000.into(), env);\n        let _ = flashloanpool.deposit_batch(rtn2.unwrap(), env);\n        // owner withdraws 500 XRD, 400 more than he deposited\n        let bucket = flashloanpool.owner_withdraw_xrd(dec!(\"500\"), env);\n        bucket\n    })?;\n    let flashloanpool_state = env.read_component_state::<FlashloanpoolState, _>(flashloanpool)?;\n    let xrd_amount = flashloanpool_state.liquidity_pool_vault.amount(&mut env)?;\n    let owner_amount = flashloanpool_state.owner_liquidity;\n    // Tokens left in the pool\n    assert_eq!(xrd_amount, dec!(\"600\"));\n    // Tokens owned by the owner - as far as he withdraws more than he deposited, value is lower than zero\n    assert_eq!(owner_amount, dec!(\"-400\"));\n    Ok(())\n}",
-      "description_summary": "Owner could withdraw more than their deposited amount due to incorrect validation in the withdrawal function."
+      "description_summary": "Owner could withdraw more than their deposited amount due to incorrect validation in the withdrawal function.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "Missing upper bound on interest rate change",
@@ -40,7 +42,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Business Logic",
       "description": "F-2023-0152 - Missing upper bound on interest rate change - Medium\nDescription: It was noticed that one of the methods available only to the contract OWNER or wallet with the ADMIN role is to change the interest rate in the protocol. While there is validation that this value is not negative, there is no upper maximum value it can take. As a consequence, the user may pay a \"fee\" several times higher than the loan amount they took out.\nThis is especially dangerous in the current configuration, in which OWNER is a single wallet and is exposed to compromise.\n\nAssets: flashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\nStatus: Fixed\nClassification\nSeverity: Medium\n\nRecommendations\nRemediation: A maximum cap on the interest_rate variable should be implemented so that even the OWNER of the contract cannot set it to an illogically high value that affects critical protocol functionality.\nResolution: The Finding was fixed in commit cedf40a.",
-      "description_summary": "No upper limit on interest rate change, potentially allowing excessive fees."
+      "description_summary": "No upper limit on interest rate change, potentially allowing excessive fees.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "Missing validations in multiple calculations could lead to unexpected state",
@@ -59,7 +63,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "F-2023-0153 - Missing validations in multiple calculations could lead to unexpected state - Medium\nDescription: Most of the numeric variables in the contract are of Decimal type. Unlike Uint, Decimal allows you to store and manipulate negative numbers. If the business logic does not take into account a number less than zero in a given context, appropriate validation should take place so that if the \"zero\" threshold is exceeded, an error is returned.\nThis situation can be observed in the update_aggregate_im function, where during the interest_new calculation it is not verified whether owner_liquidity is not equal to total_liquidity, so if the values of rewards_new, rewards_aggregated or interest_aggregated are greater than zero, then interest_new will be negative.\nAdditionally, in the update_supplier_kvs function it was noticed that there is no validation whether box_lsu is different from zero, which may cause the contract to panic when calculating the supplier_relative_lsu_stake variable.\n\nAssets: flashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\nStatus: Fixed\nClassification\nSeverity: Medium\n\nRecommendations\nRemediation: We suggest adding additional validations in all places where Decimal values should not exceed the zero threshold. Additionally, the suggested solution is to verify all divisor values in the context of their being different from zero.\nResolution: The Finding was fixed in commit e5c8e29.",
-      "description_summary": "Missing validations in calculations could lead to negative values and unexpected states."
+      "description_summary": "Missing validations in calculations could lead to negative values and unexpected states.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "Macros used for debugging should not be used in production code",
@@ -78,7 +84,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "F-2023-0154 - Macros used for debugging should not be used in production code - Low\nDescription: The current contract code has been found to contain many instances of debugging macros, such as debug!() and info!(). While they are very helpful during the code development and testing phase, their use in production code is considered bad practice. Additionally, each operation that stores some data in memory causes the virtual machine to perform some work - and thus increases the cost of gas needed to perform this transaction.\n\nAssets: flashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\nStatus: Fixed\nClassification\nSeverity: Low\n\nRecommendations\nRemediation: If this type of methods are used to transfer certain state to off-chain components, for example in the form of logs - it seems more appropriate to use event emitting. Otherwise, you should consider removing unnecessary code fragments from the codebase.\nResolution: The Finding was fixed in commit 6cfbaf4.",
-      "description_summary": "Debugging macros found in production code, increasing gas costs and poor practice."
+      "description_summary": "Debugging macros found in production code, increasing gas costs and poor practice.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "Owner is able to unlock and update royalties for function calls",
@@ -97,7 +105,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Business Logic",
       "description": "F-2023-0155 - Owner is able to unlock and update royalties for function calls - Low\nDescription: The owner has set up some royalties for public methods and even specified that the amount is locked. However, they reserved a right to unlock and update the amount they charge from users for calling these methods (the protocol enforces a hard cap).\nSince the royalties are marked as locked, the assumption is that they should be unchanged.\n\n.enable_component_royalties(component_royalties! {\nroles {\nroyalty_setter => OWNER;\nroyalty_setter_updater => OWNER;\nroyalty_locker => OWNER;\nroyalty_locker_updater => OWNER;\nroyalty_claimer => OWNER;\nroyalty_claimer_updater => OWNER;\n},\ninit {\nget_flashloan => Xrd(1.into()), locked;\n...\n\nAssets: flashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\nStatus: Fixed\nClassification\nSeverity: Low\n\nRecommendations\nRemediation: Restrict the ability to unlock royalties and/or mark the royalties as updatable. You can also specify the amount to be an approximate USD equivalent with Usd(amount.into()).\nResolution: The Finding was fixed in commit aee1aca.",
-      "description_summary": "Owner can unlock and update royalties despite them being marked as locked."
+      "description_summary": "Owner can unlock and update royalties despite them being marked as locked.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "Wrong limit for the size of box",
@@ -116,7 +126,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Business Logic",
       "description": "F-2023-0156 - Wrong limit for the size of box - Low\nDescription: The box_size is set to 250 in the beginning. It is possible to lower it, but not possible to change it back to 250. This change multiplies as the box_size * box_size is the maximum possible number of users of the contract.\n\nAssets: flashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\nStatus: Fixed\nClassification\nSeverity: Low\n\nRecommendations\nRemediation: Check the value inclusively.\nResolution: The Finding was fixed in commit a748fc7.",
-      "description_summary": "Box size limit could not be reset to its original value, affecting user capacity."
+      "description_summary": "Box size limit could not be reset to its original value, affecting user capacity.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "Floating Language Version",
@@ -135,7 +147,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "F-2023-0157 - Floating Language Version - Low\nDescription: It is preferable for a production project, especially a smart contract, to have the programming language version pinned explicitly. This results in a stable build output, and guards against unexpected toolchain differences or bugs present in older versions, which could be used to build the project.\nThe language version could be pinned in automation/CI scripts, as well as proclaimed in README or other kinds of developer documentation. However, in the Rust ecosystem, it can be achieved more ergonomically via a rust-toolchain.toml descriptor (see https://rust-lang.github.io/rustup/overrides.html#the-toolchain-file).\n\nStatus: Fixed\nClassification\nSeverity: Low\n\nRecommendations\nRemediation: Pin the language version at the project level.\nResolution: The Finding was fixed in commit e8da2c1.",
-      "description_summary": "Programming language version was not explicitly pinned, risking unstable builds."
+      "description_summary": "Programming language version was not explicitly pinned, risking unstable builds.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "Test functions should be removed",
@@ -153,8 +167,10 @@
       "cwe_classification": null,
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
-      "description": "",
-      "description_summary": ""
+      "description": "F-2023-0158 - Test functions should be removed - Low\nDescription:\nOne of the methods available for public call is deposit_batch. It is used to manually add funds to stacking rewards. However, both in the documentation and in the contract code it is specified as \"Temporary\" due to the need to simulate the validator during the testing phase. While it does not pose a direct threat to the contract, such features should not be available in the production version of the code.\n\nAssets:\nflashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\n\nStatus:\nFixed\n\nClassification\nSeverity:\nLow\n\nRecommendations\nRemediation: The final version of the protocol should not contain any test functions or functions simulating specific operations. In the code marked as the 'release version', the deposit_batch function and its associated method must be removed.\n\nResolution:\nRevised in commits 49452f7 and 53f392b.",
+      "description_summary": "Test functions like deposit_batch should be removed from production code to avoid unnecessary risks.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": null
     },
     {
       "title": "Suggestion for searching a vacant box",
@@ -173,7 +189,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "I-2023-0038 - Suggestion for searching a vacant box - Info\nDescription: In the deposit_lsu function, the code is looking for an index of a box (box_nr) for saving deposit info.\nfor (key, values) in &self.supplier_aggregate_im {\n    // Check if the Vec is not empty and satisfies your condition\n    if let Some(first_value) = values.first() {\n        if *first_value < self.box_size.into() {\n            // update box number\n            box_nr = *key;\n            // update existing supplier's info before adding a new supplier\n            self.update_supplier_kvs(box_nr);\n            // Set the flag to true to indicate that the condition has been satisfied\n            condition_satisfied = true;\n            break;\n        }\n    }\n}\nAfter that condition is checked, and based on a result, some actions are performed:\nif condition_satisfied {\n    // Scenario 1: Add new supplier to the existing key value store and index map\n    ...\n} else {\n    // Scenario 2: In case that all boxes are full or no box exists, a new box has to be inserted\n    ...\n}\nThe code can be simplified to improve Code Quality.\n\nAssets: flashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\nStatus: Fixed\n\nRecommendations\nRemediation: Consider using optional box index, and matching on the option. Sample implementation is listed below:\nlet mut vacant_box = None;\nfor (box_nr, values) in &self.supplier_aggregate_im {\n    if values.first().is_some_and(|suppliers_in_box| *suppliers_in_box < self.box_size.into()) {\n        vacant_box = Some(*box_nr);\n        break;\n    }\n}\nmatch vacant_box {\n    Some(box_nr) => ..., \n    None => ..., \n}\nResolution: The Finding was fixed in commit 35f25c6.",
-      "description_summary": "Code logic for finding a vacant box could be simplified to improve quality."
+      "description_summary": "Code logic for finding a vacant box could be simplified to improve quality.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "Unformatted Code",
@@ -196,7 +214,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "I-2023-0039 - Unformatted Code - Info\nDescription: cargo fmt yields changes in 2 files total. Formatting the code is recommended for good Code Quality.\n\nAssets:\nflashloan-pool/src/events.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\nflashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\n\nStatus: Fixed\n\nRecommendations\nRemediation: Consider formatting the code using rustfmt or an equivalent.\nResolution: The Finding was fixed in commit 16dd2e3.",
-      "description_summary": "Code was not formatted, affecting readability and quality."
+      "description_summary": "Code was not formatted, affecting readability and quality.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "The contract code is a single monolith file",
@@ -215,7 +235,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "I-2023-0040 - The contract code is a single monolith file - Info\nDescription: In this commit, the lib.rs, main source file has 1009 lines. Splitting it into separate files/modules would increase its readability, hence its quality. Big chunks of logic can be extracted into separate functions, even if they are called once; just to make it easier to digest and reason about.\n\nAssets:\nflashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\n\nStatus: Fixed\n\nRecommendations\nRemediation: Consider splitting large functions into smaller and/or moving the actual code of the contract’s methods into a separate file.\nResolution: The Finding was fixed in commit 0b13351.",
-      "description_summary": "Contract code is a single monolithic file, reducing readability and maintainability."
+      "description_summary": "Contract code is a single monolithic file, reducing readability and maintainability.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "Suggestions for idiomatic code style",
@@ -238,7 +260,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "I-2023-0041 - Suggestions for idiomatic code style - Info\nDescription: cargo clippy is a popular tool for catching common mistakes and improving the code. It reports some possibly useful code changes.\n\nAssets:\nflashloan-pool/src/events.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\nflashloan-pool/src/lib.rs [https://github.com/gable-finance/gable/tree/main/src/backend/scrypto/flashloan-pool/]\n\nStatus: Fixed\n\nRecommendations\nRemediation: Consider following its suggestions and/or using cargo clippy --fix to apply some of them automatically.\nResolution: The Finding was fixed in commit 82f9ac1.",
-      "description_summary": "Code improvements suggested by cargo clippy were not implemented."
+      "description_summary": "Code improvements suggested by cargo clippy were not implemented.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": true
     },
     {
       "title": "Former name is mentioned",
@@ -257,7 +281,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "I-2023-0042 - Former name is mentioned - Info\nDescription: The README.md file as well as Functional Requirements mentions the old protocol name.\n\nStatus: Fixed\n\nRecommendations\nRemediation: Consider replacing it with the relevant name.\nResolution: The Finding was fixed in commit 794794e.",
-      "description_summary": "The old protocol name was mentioned in documentation."
+      "description_summary": "The old protocol name was mentioned in documentation.",
+      "reported_status": "Fixed",
+      "is_substrate_finding": false
     }
   ]
 }
