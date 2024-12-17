@@ -1,0 +1,155 @@
+{
+  "audited_project_id": 16,
+  "project_name": "PolkadotRunetimeTemplates",
+  "auditor": "Security Research Labs",
+  "audit_link": "https://github.com/OpenZeppelin/polkadot-runtime-templates/blob/main/audits/2024-07.pdf",
+  "findings": [
+    {
+      "title": "EVM runtime template waives XCM message delivery fees",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": "29c6332022c2b84a19de14356e4adc942484ea64",
+      "location": [
+        {
+          "file_path": "evm-template/runtime/src/configs/xcm_config.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Denial of Service (DoS) and Spamming",
+      "description": "3.2.1 EVM runtime template waives XCM message delivery fees\n\nAttack scenario:\nEVM runtime template waives XCM message delivery fee\n\nLocation:\nevm-template/runtime/src/configs/xcm_config.rs\n\nAttack impact:\nAn attacker can cause network congestion causing delay in message deliveries or discards and storage exhaustions\n\nSeverity:\nHigh\n\nStatus:\nFixed [6]\n\nTo avoid congestion and spamming of messages in the network via XCM, a fee is charged for message delivery to ensure fairness and optimal message delivery time amongst all the participants. This fee is configured in the runtime construct through use of FeeManager type.\n\nIn the EVM template for XCM runtime configuration for OpenZeppelin, the FeeManager [7] is set to the Rust unit type \"()\". In the Polkadot-SDK, this implementation effectively waives the delivery fees [8].\n\nThereby all fee-based congestion control mechanisms become ineffective since the fees are not actually charged. An attacker can cause congestion, possibly leading to long delays in message delivery, storage exhaustion and/or dropping of messages.\n\nWe recommend implementing a fee for XCM message delivery and follow the fix implemented in the OpenZeppelin generic template [9].",
+      "description_summary": "XCM message delivery fees are waived, allowing attackers to cause network congestion and message delays.",
+      "reported_status": "Fixed [6] [Online]. Available: https://github.com/OpenZeppelin/polkadot-runtime-templates/pull/239",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Incorrect runtime weights for treasury pallet",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": "5e61a2d8a6ddeaf0258c664d11205494227a4273",
+      "location": [
+        {
+          "file_path": "generic-template/runtime/src/configs/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Weight Management",
+      "description": "3.2.2 Incorrect runtime weights for treasury pallet\n\nAttack scenario:\nIncorrect runtime weights for treasury pallet\n\nLocation:\ngeneric-template/runtime/src/configs/mod.rs\n\nAttack impact:\nExtrinsic weights in treasury pallet are not dependent on the actual runtime configuration, this could lead to underweight extrinsics\n\nSeverity:\nHigh\n\nStatus:\nFixed [10]\n\nOpenZeppelin’s runtime template constructs runtime logics with FRAME pallets in its configuration. Appropriate benchmarking is required for the pallets to ensure its actual runtime performance. This will effectively transform into charging adequate fee for extrinsics execution.\n\nFor example, the runtime weights for the pallet treasury [11] in the EVM runtime template are configured using the default SubstrateWeight.\n\nAs these pallet extrinsic weights are not dependent on the actual runtime configuration and using default Substrate weights could lead to underweight extrinsics. An attacker may spam and bloat network storage freely using these underweight extrinsics.\n\nThe WeightInfo of the treasury pallet should be configured using actual runtime benchmarks. A best practice example for configuring the weights of the treasury pallet can be found in the Kusama runtime implementation [12].",
+      "description_summary": "Incorrect runtime weights for the treasury pallet could lead to underweight extrinsics, allowing attackers to spam and bloat network storage.",
+      "reported_status": "Fixed [10] [Online]. Available: https://github.com/OpenZeppelin/polkadot-runtime-templates/pull/240.",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Existential deposit of EVM template could suggest setting it to 0",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "evm-template/runtime/src/constants.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Denial of Service (DoS) and Spamming",
+      "description": "3.2.3 Existential deposit of EVM template could suggest setting it to 0\n\nAttack scenario:\nExistential deposit configuration is suggested to be zero\n\nLocation:\nevm-template/runtime/src/constants.rs\n\nAttack impact:\nExistential deposit of 0 could lead to spamming through creating a high number of accounts and thereby slowing down the chain operation\n\nSeverity:\nLow\n\nStatus:\nRisk accepted [13]\n\nThe minimum balance that an account must maintain to be considered a valid active account in Polkadot is EXISTENTIAL_DEPOSIT (ED). If an account’s balance falls below this threshold, all its funds are lost, and the account is removed by the network.\n\nIn the EVM template, ED is set [14] to zero for no benchmark feature build. A new runtime developer may accidentally set the ED value to zero. This could lead to an attacker creating multiple free accounts, occupying network resources and slowing down the chain. Allowing an account to remain active with zero ED could also lead to a spam attack.\n\nIt is recommended to remove the ED value of zero from the runtime template and document in inline comment that its value must be above zero. Every parachain will have its own threshold for ED, either in their native token or DOT. Furthermore, we recommend explaining these two configurations in the inline comment for the ED parameter in the runtime template. This will benefit new runtime developers by helping them avoid misconfiguring this safety-critical parameter.\n\nA guideline on choosing a suitable ED value may be provided as below:\n𝐸𝐷 = 𝑀𝑖𝑛 𝑁𝑢𝑚𝑏𝑒𝑟 𝑜𝑓 𝑟𝑒𝑑𝑢𝑛𝑑𝑎𝑛𝑡 𝑐𝑜𝑙𝑙𝑎𝑡𝑜𝑟𝑠 × 𝑆𝑡𝑜𝑟𝑎𝑔𝑒 𝑑𝑢𝑟𝑎𝑡𝑖𝑜𝑛 (𝑦𝑒𝑎𝑟𝑠) × 𝑆𝑡𝑜𝑟𝑎𝑔𝑒 𝑐𝑜𝑠𝑡 𝑝𝑒𝑟 𝑦𝑒𝑎𝑟",
+      "description_summary": "Existential deposit set to zero could allow attackers to spam the network by creating multiple free accounts.",
+      "reported_status": "Risk accepted [13] [Online]. Available: https://github.com/OpenZeppelin/polkadot-runtime-templates/issues/195.",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Incorrect parameter could lead to runtime panic",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": "526adb32c5809862ec4cce5cf50d8bd57d906808",
+      "location": [
+        {
+          "file_path": "evm-template/runtime/src/configs/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Arithmetic",
+      "description": "3.2.4 Incorrect parameter could lead to runtime panic\n\nAttack scenario:\nMisconfiguration of dependent critical parameters in runtime\n\nLocation:\nevm-template/runtime/src/configs/mod.rs\n\nAttack impact:\nRuntime crash or wraparound of gas limit ratio causing runtime panics\n\nSeverity:\nLow\n\nStatus:\nFixed [15]\n\nThe GasLimitPovSizeRatio [16] is the ratio of the amount of Gas (BlockGasLimit) to the Proof Size (MAX_POV_SIZE) for a block. The GasLimitPovSizeRatio is used in GasWeightMapping [17] to obtain the weight of the corresponding proof size.\n\nIn the EVM runtime template, GasLimitPovSizeRatio may reach a large value or wrap to zero causing runtime crash. This can be enabled through setting the dependent parameter BlockGasLimit to zero or Max value in the runtime.\n\nEnsure that GasLimitPovSizeRatio is bounded within U64 data following the implementation in Frontier template from Polkadot [18]. Also consider documenting the risk of deviating outside the range such that the runtime developer is aware of potential risk from misconfiguring this value.",
+      "description_summary": "Misconfigured GasLimitPovSizeRatio could cause runtime crashes or wraparounds due to improper parameter values.",
+      "reported_status": "Fixed [15] [Online]. Available: https://github.com/OpenZeppelin/polkadot-runtime-templates/pull/246.",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Usage of deprecated CurrencyAdapter in transaction_payment",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "runtime/src/configs/mod.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Dependency",
+      "description": "3.2.5 Usage of depreciated CurrencyAdapter in transaction_payment\n\nAttack scenario:\nUsage may result in unexpected behavior and future edge-cases.\n\nLocation:\nruntime/src/configs/mod.rs\n\nAttack impact:\nThere may be inconsistencies in the computation of transferable balances, and future undefined behavior.\n\nSeverity:\nLow\n\nStatus:\nOpen [19]\n\nThe runtime configuration for pallet_transaction_payment relies on the deprecated (since v1.6.0) CurrencyAdapter [20].\n\nThe discrepancy this introduces may result in unexpected behavior and inconsistencies when calculating transferable balances. We recommend migrating to the supported FungibleAdapter and Fungible traits.",
+      "description_summary": "Deprecated CurrencyAdapter may cause inconsistencies in balance calculations and undefined behavior.",
+      "reported_status": "Open [19] [Online]. Available: https://github.com/OpenZeppelin/polkadot-runtime-templates/issues/251.",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Misconfiguration of MaxRemoteLockConsumers in pallet_xcm",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": "1d429ee3ea542c22bbf0014753646da12e095e19",
+      "location": [
+        {
+          "file_path": "runtime/src/configs/xcm_config.rs",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "3.2.6 Misconfiguration of MaxRemoteLockConsumers in pallet_xcm\n\nAttack scenario:\nMisconfiguration may result in unintended side-effects and failed assumptions\n\nLocation:\nruntime/src/configs/xcm_config.rs\n\nAttack impact:\nUnintentional behavior may be present in pallet_xcm\n\nSeverity:\nLow\n\nStatus:\nFixed [21]\n\nIn pallet_xcm::Config both MaxLockers [22] and MaxRemoteLockConsumers [23] types have been set to the constant MaxLockers: u32 = 8.\n\nThe standard configuration of MaxRemoteLockConsumers is zero [24], which is declared in an unused constant MaxRemoteLockConsumers: u32 = 0.\n\nBased on this analysis and the lack of documentation around the deviation from the standard configuration, we assume this MaxRemoteLockConsumers was misconfigured to 8 not 0.\n\nThis may result in unintended side-effects that are unknown to users implementing the template. If this configuration was intentional, the rationale behind it should be explicitly stated.\n\nWe recommend configuring MaxRemoteLockConsumers to the declared constant MaxRemoteLockConsumers: u32 = 0.",
+      "description_summary": "Misconfiguration of MaxRemoteLockConsumers may cause unintended side-effects in pallet_xcm.",
+      "reported_status": "Fixed [21] [Online]. Available: https://github.com/OpenZeppelin/polkadot-runtime-templates/pull/268.",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Missing documentation undermines the templates' use-case",
+      "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
+      "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
+      "reported_remediated_commit": "https://github.com/OpenZeppelin/polkadot-runtime-templates/pull/250",
+      "location": [
+        {
+          "file_path": "runtime/src/configs/",
+          "lines": null
+        }
+      ],
+      "reported_impact": "Info",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Code Quality",
+      "description": "3.2.7 Missing documentation undermines the templates' use-case\n\nAttack scenario:\nNovice substrate developers may unknowingly alter sound security design due to ambiguity of rationale\n\nLocation:\nruntime/src/configs/\n\nAttack impact:\nConfiguration alteration could result in preventable vulnerabilities being re-opened.\n\nSeverity:\nInfo\n\nStatus:\nFixed [25]\n\nThroughout the runtime configurations, design rationale is frequently undocumented. Considering the runtime templates' use-case, to offer an entry point for secure substrate development, we believe the lack of documentation negatively impacts these intentions by introducing design ambiguity.\n\nWe recommend documenting all critical configurations to outline: the current design rationale; the security considerations for modification; and disclaimers around incompatible modifications.\n\nSpecifically, we have identified the following key areas that require specific justification, although more likely exist:\n1. In xcm_executor the mutual exclusivity of IsReserve [26] and IsTeleport [27] should be documented, alongside the importance of non-null FeeManager [28].\n2. In cumulus_pallet_xcmp_queue PriceForSiblingParachainDelivery [29], the ramifications of null configuration should be described.\n3. The rationale and risk of not including a non-zero ExistentialDeposit [30] in pallet_balances should be fully described.\n4. The configuration options for FeeMultiplierUpdate [31] in pallet_transaction_payment should be explained (e.g., SlowAdjusting / FastAdjusting).\n5. All pallets' WeightInfo configuration should have a disclaimer to perform benchmarking in the context of the user’s specific runtime.\n6. The process for calculating GasLimitPovSizeRatio [16] in pallet_evm should be outlined.",
+      "description_summary": "Lack of documentation for critical configurations may lead to preventable security vulnerabilities.",
+      "reported_status": "Fixed [25] [Online]. Available: https://github.com/OpenZeppelin/polkadot-runtime-templates/pull/250.",
+      "is_substrate_finding": false
+    }
+  ]
+}
