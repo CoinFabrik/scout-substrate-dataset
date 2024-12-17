@@ -1,0 +1,7 @@
+{
+  "audited_project_id": 16,
+  "project_name": "PolkadotRunetimeTemplates",
+  "auditor": "Security Research Labs",
+  "audit_link": "https://github.com/OpenZeppelin/polkadot-runtime-templates/blob/main/audits/2024-07.pdf",
+  "findings": []
+}
