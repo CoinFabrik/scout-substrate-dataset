@@ -21,7 +21,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Weight Management",
       "description": "1. Static calculation of weights for the claim_reward extrinsic enables DoS attack vector\nSeverity: Major\nThe claim_reward function, defined in pallets/lend-market/src/lib.rs:782-800, iterates over all the existing markets to collect rewards from each of them. However, since the number of registered markets is not bounded, the execution could exceed the computation limit if too many markets are registered. Since the calculation of the extrinsic weights does not take into account the cardinality of the markets, the fee charged to the origin will be uncorrelated with the actual computational resource usage. This leads to a situation where the execution of multiple claims within the claim_reward extrinsic will cost the same as a single claim done with the claim_reward_for_market extrinsic. Consequently, attackers could leverage this behavior to overload chain nodes by executing claim_reward on multiple markets paying a smaller fee, potentially allowing a denial-of-service attack.",
-      "description_summary": "Static weight calculation in claim_reward allows potential DoS due to unbounded market iterations."
+      "description_summary": "Static weight calculation in claim_reward allows potential DoS due to unbounded market iterations.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "Price feeder centralization risks",
@@ -40,7 +42,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "2. Price feeder centralization risks\nSeverity: Minor\nIn the prices pallet, the FeederOrigin can set arbitrary emergency prices by executing the set_price and reset_price extrinsics defined in pallets/prices/src/lib.rs:120-143. However, prices are not validated before being stored and every value is accepted.\nAs a consequence, this could lead to the following scenarios:\n1. Privilege abuse: An attacker may get access to the private key of the FeederOrigin. He can then use the account to manipulate prices, for example by setting the price for all assets to a small value, which would allow the attacker to liquidate all users at their loss.\n2. Input error: Since the provided Price is not validated, incorrect values could be provided as input and stored in the contract. Even a Price equal to zero is allowed.\nWe classify this issue as minor since only a privileged account can perform the aforementioned operations.\nRecommendation\nWe recommend performing validation on the provided prices. For instance, there could be a maximum allowed delta per time unit, such that a price of zero would not be accepted.\nWhile this does not fully resolve the centralization issue, privilege abuse would be more involved and require multiple transactions over a longer time span. This would allow operators and users to react.\nStatus: Acknowledged\nThe client states that they use multi-signature accounts for privileged roles to reduce centralization risks.",
-      "description_summary": "Price feeder allows unvalidated emergency prices, risking privilege abuse and input errors."
+      "description_summary": "Price feeder allows unvalidated emergency prices, risking privilege abuse and input errors.",
+      "reported_status": "Acknowledged",
+      "is_substrate_finding": true
     },
     {
       "title": "Multiple foreign_asset_id can be mapped to the same asset_id",
@@ -59,7 +63,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "3. Multiple foreign_asset_id can be mapped to the same asset_id\nSeverity: Minor\nIn pallets/prices/src/lib.rs:149-157, the set_foreign_asset extrinsic permits the UpdateOrigin origin to establish a mapping within the pallet, associating a foreign_asset_id with an asset_id. However, it lacks a verification mechanism to ensure that the given asset_id is not already linked to a different foreign_asset_id. As a result, an asset_id can be associated with multiple foreign assets which would lead to market misconfigurations. We classify this issue with minor severity since only a privileged account can perform the aforementioned operation.\nRecommendation\nWe recommend introducing a verification mechanism checking that the asset_id is not already linked to a different foreign_asset_id.\nStatus: Resolved\nThe client removed set_foreign_asset and get_special_asset_price from the codebase.",
-      "description_summary": "Lack of verification allows multiple foreign_asset_id to map to the same asset_id, risking market misconfigurations."
+      "description_summary": "Lack of verification allows multiple foreign_asset_id to map to the same asset_id, risking market misconfigurations.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "Missing check that foreign_asset_id is specifically of the ForeignAsset type",
@@ -78,7 +84,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "4. Missing check that foreign_asset_id is specifically of the ForeignAsset type\nSeverity: Minor\nIn pallets/prices/src/lib.rs:149-157, the set_foreign_asset extrinsic enables the UpdateOrigin origin to establish a mapping within the pallet that associates a foreign_asset_id with an asset_id. However, it does not verify that the provided foreign_asset_id is specifically of the ForeignAsset type; it is only identified as a CurrencyId. As a result, the UpdateOrigin can map any asset type, not just foreign assets. We classify this issue with minor severity since only a privileged account can perform the aforementioned operation.\nRecommendation\nWe recommend verifying that the provided foreign_asset_id is specifically of the ForeignAsset type.\nStatus: Resolved\nThe client removed set_foreign_asset and get_special_asset_price from the codebase.",
-      "description_summary": "Missing validation allows mapping of non-ForeignAsset types, risking misconfigurations."
+      "description_summary": "Missing validation allows mapping of non-ForeignAsset types, risking misconfigurations.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "Default mantissa precision can lead to an incorrect price",
@@ -97,7 +105,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "5. Default mantissa precision can lead to an incorrect price\nSeverity: Minor\nIn pallets/prices/src/lib.rs:179-186, the get_asset_mantissa function is designed to calculate the mantissa for a given asset by attempting to retrieve the asset's decimal precision from multiple sources. However, if it fails to find any decimal information for the specified asset_id, it automatically assumes a default precision of 12 decimals. As a result, this approach poses a risk, as the function plays a crucial role in asset valuation, and an incorrect mantissa calculation would lead to the determination of an erroneous price.\nRecommendation\nWe recommend returning an error if the decimal precision for a particular asset cannot be retrieved.\nStatus: Acknowledged\nThe client states that a misconfiguration of the decimal precision is unlikely since it is set during the asset registration in the bifrost-asset-registry pallet.",
-      "description_summary": "Default mantissa precision assumption can lead to incorrect asset price calculation."
+      "description_summary": "Default mantissa precision assumption can lead to incorrect asset price calculation.",
+      "reported_status": "Acknowledged",
+      "is_substrate_finding": true
     },
     {
       "title": "Missing validation for the lend_token_id",
@@ -116,7 +126,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "6. Missing validation for the lend_token_id\nSeverity: Minor\nIn pallets/lend-market/src/lib.rs:656-680, the force_update_market function enables the UpdateOrigin to assign a new lend_token_id to a specified market. However, it fails to verify whether the lend_token_id is not already a market, a validation that is performed in the ensure_lend_token method in line 1843. As a consequence, this oversight could lead to inconsistencies in market configuration since the lend token is not designed to be used in a market. We classify this issue with minor severity since only a privileged account can perform the aforementioned operation.\nRecommendation\nWe recommend verifying whether the lend_token_id is not already utilized in a market.\nStatus: Resolved",
-      "description_summary": "Missing validation for lend_token_id may lead to market configuration inconsistencies."
+      "description_summary": "Missing validation for lend_token_id may lead to market configuration inconsistencies.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "The force_update_market extrinsic could break existing markets",
@@ -135,7 +147,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Business Logic",
       "description": "7. The force_update_market extrinsic could break existing markets\nSeverity: Minor\nIn pallets/lend-market/src/lib.rs:659, the force_update_market function permits the UpdateOrigin to forcibly replace an existing market with another, without ensuring the coherence of the provided data. This poses a risk since UpdateOrigin is allowed to modify markets with any data, including malicious ones that could break invariants. As a consequence, the current approach could result in the acceptance of markets with a collateral_factor or liquidation_threshold outside of the [0,1] range, which could break market operations and potentially cause a loss of funds. We classify this issue as minor since only a privileged account can perform the aforementioned operation.\nRecommendation\nWe recommend removing the force_update_market extrinsic and utilizing the update_market one to handle market updates.\nStatus: Resolved",
-      "description_summary": "force_update_market extrinsic allows data inconsistencies that could break market operations."
+      "description_summary": "force_update_market extrinsic allows data inconsistencies that could break market operations.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "Static calculation of weights for the update_liquidation_fee_collateral extrinsic",
@@ -154,7 +168,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Weight Management",
       "description": "8. Static calculation of weights for the update_liquidation_fee_collateral extrinsic\nSeverity: Minor\nIn pallets/lend-market/src/interest.rs:1123-1130, the update_liquidation_fee_collateral extrinsic takes a collaterals vector as a parameter. However, the calculation of the extrinsic weights does not take into account the length of the collaterals vector. As a result, the update_liquidation_fee_collateral extrinsic will charge the same fee for vectors of different sizes leading to an uncorrelated relation between fees and computational resource usage. We classify this issue as minor since only a privileged account can perform the aforementioned operation.\nRecommendation\nWe recommend dynamically calculating the weight of the update_liquidation_fee_collateral extrinsic based on the collaterals vector's cardinality.\nStatus: Resolved",
-      "description_summary": "Static weight calculation for update_liquidation_fee_collateral ignores vector length, causing uncorrelated fee charges."
+      "description_summary": "Static weight calculation for update_liquidation_fee_collateral ignores vector length, causing uncorrelated fee charges.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "Missing validation of liquidate_incentive_reserved_factor during market update",
@@ -173,7 +189,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "9. Missing validation of liquidate_incentive_reserved_factor during market update\nSeverity: Minor\nIn pallets/lend-market/src/lib.rs:381 the add_market function checks the correct allowed ranges for the provided market parameters, including liquidate_incentive_reserved_factor. This value is forced to be in the (0,1) range. However, in the update_market function in pallets/lend-market/src/lib.rs:610, this validation is not performed. As a consequence, when updating the market, it is possible to set the liquidate_incentive_reserved_factor value outside the (0,1) range, which will have implications in the form of incorrect calculations of incentives when liquidating positions within the liquidated_transfer function in pallets/lend-market/src/lib.rs:1757. We classify this as minor since only a privileged account can perform the aforementioned operation.\nRecommendation\nWe recommend validating the liquidate_incentive_reserved_factor in the update_market function.\nStatus: Resolved",
-      "description_summary": "Missing validation in update_market allows liquidate_incentive_reserved_factor outside valid range."
+      "description_summary": "Missing validation in update_market allows liquidate_incentive_reserved_factor outside valid range.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "Incorrect interest is calculated if requested before market initialization",
@@ -192,7 +210,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Business Logic",
       "description": "10. Incorrect interest is calculated if requested before market initialization\nSeverity: Minor\nIn pallets/lend-market/src/interest.rs:58, the get_market_status function calculates and returns information about the queried market. However, in case the market has not been used yet, the last_accrued_interest_time variable, when retrieved in line 75 from the LastAccruedInterestTime on-chain storage, would default to zero. Consequently, when get_market_status is called without the market being previously initialized, the interest accrual period is inaccurately computed from January 1, 1970, despite the asset not being used yet leading to a wrong calculation.\nRecommendation\nWe recommend handling the case of last_accrued_interest_time equal to zero in the get_market_status function.\nStatus: Resolved",
-      "description_summary": "Incorrect interest calculation occurs if requested before market initialization."
+      "description_summary": "Incorrect interest calculation occurs if requested before market initialization.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "Inefficient active markets search",
@@ -211,7 +231,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "11. Inefficient active markets search\nSeverity: Informational\nThe ensure_active_market function, defined in pallets/lend-market/src/lib.rs:1801-1806, searches for a market by comparing identifiers one by one in a loop through all markets with an asymptotic complexity of O(n). However, the same operation could be performed in constant time by using the market method, defined in pallets/lend-market/src/lib.rs:1946. Consequently, this would cause the execution to incur higher costs due to unnecessary iteration.\nRecommendation\nWe recommend replacing the iteration with a call to the market function.\nStatus: Resolved",
-      "description_summary": "Active market search is inefficient due to O(n) iteration; can be optimized with constant time method."
+      "description_summary": "Active market search is inefficient due to O(n) iteration; can be optimized with constant time method.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "Inefficient market data aggregation",
@@ -230,7 +252,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "12. Inefficient market data aggregation\nSeverity: Informational\nThe get_lf_base_position function, defined in pallets/lend-market/src/lib.rs:1145-1151 iterates through all active markets, aggregating collateral for underlying assets. However, the markets queried are not retained, despite being re-queried later by the current_collateral_balance function in line 1407. Consequently, this would cause the execution to incur higher costs due to unnecessary calculations.\nRecommendation\nWe recommend either passing the query results down to the called functions without alteration, or redesigning the storage layout to only retrieve the necessary data at the point of call.\nStatus: Acknowledged",
-      "description_summary": "Inefficient market data aggregation leads to unnecessary re-queries and higher execution costs."
+      "description_summary": "Inefficient market data aggregation leads to unnecessary re-queries and higher execution costs.",
+      "reported_status": "Acknowledged",
+      "is_substrate_finding": true
     },
     {
       "title": "Redundant storage queries",
@@ -256,7 +280,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "13. Redundant storage queries\nSeverity: Informational\nThe pallets/lend-market/src/lib.rs file exhibits redundant uses of on-chain storage. For instance, the AccountDeposits storage, introduced at line 315, undergoes redundant queries in lines 945-946, 1280-1283, 1312-1315, and 2105-2106. In each case, the storage is first checked for the key's presence, followed by a separate query to fetch the key's value. Another example of redundant queries can be seen in line 1146, where the storage query Self::liquidation_free_collaterals is called on every iteration of the loop despite having the same value on each iteration. Minimizing the number of storage queries would enhance both performance and code clarity.\nRecommendation\nWe recommend employing the OptionQuery type for business logic that needs to check for the existence of a key. Additionally, duplicated queries in the same scope should be avoided.\nStatus: Acknowledged",
-      "description_summary": "Redundant storage queries impact performance and code clarity."
+      "description_summary": "Redundant storage queries impact performance and code clarity.",
+      "reported_status": "Acknowledged",
+      "is_substrate_finding": true
     },
     {
       "title": "Code duplication",
@@ -280,7 +306,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "14. Code duplication\nSeverity: Informational\nThe pallets/lend-market/src/lib.rs file contains multiple code duplicates:\n1. The code fragments in lines 1144-1152 and 1158-1166 are nearly identical, with the only distinction being the function called on the iterated values: collateral_asset_value (line 1149) in one instance and liquidation_threshold_asset_value (line 1163) in the other.\n2. The code fragments in lines 1312-1325 and 1280-1293 are nearly identical, with the only distinction being the type parameter: BalanceOf in one instance and FixedU128 in the other.\nCode duplication undermines maintainability, thereby expanding the potential for security vulnerabilities.\nRecommendation\nWe recommend refactoring the codebase to avoid duplications. Generic type parameters and function-type parameters could be used to streamline the data flow.\nStatus: Acknowledged",
-      "description_summary": "Code duplication impacts maintainability and increases potential for security issues."
+      "description_summary": "Code duplication impacts maintainability and increases potential for security issues.",
+      "reported_status": "Acknowledged",
+      "is_substrate_finding": true
     },
     {
       "title": "The get_special_asset_price function consistently returns None",
@@ -299,7 +327,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "15. The get_special_asset_price function consistently returns None\nSeverity: Informational\nIn pallets/prices/src/lib.rs:188, the get_special_asset_price function is designed to return a TimeStampedPrice value, but it consistently returns None instead. As a consequence, this behavior is misleading and renders the function ineffective.\nRecommendation\nWe recommend eliminating the function get_special_asset_price if it’s not being utilized.\nStatus: Resolved",
-      "description_summary": "The get_special_asset_price function consistently returns None, making it ineffective."
+      "description_summary": "The get_special_asset_price function consistently returns None, making it ineffective.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "Inefficient reduce_reserves extrinsic execution in case of reduce_reserves parameter equal to zero",
@@ -318,7 +348,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "16. Inefficient reduce_reserves extrinsic execution in case of reduce_reserves parameter equal to zero\nSeverity: Informational\nIn pallets/lend-market/src/lib.rs:1045, the reduce_reserves extrinsic takes reduce_amount as a parameter. However, if this amount is zero, the function will perform all operations unnecessarily, which is inefficient and may be misleading to the function caller.\nRecommendation\nWe recommend verifying whether reduce_amount is greater than zero and, if not, returning an error that terminates the transaction.\nStatus: Resolved",
-      "description_summary": "Inefficient execution occurs if reduce_reserves parameter is zero, performing unnecessary operations."
+      "description_summary": "Inefficient execution occurs if reduce_reserves parameter is zero, performing unnecessary operations.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     },
     {
       "title": "Use of magic numbers decreases maintainability",
@@ -341,7 +373,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "17. Use of magic numbers decreases maintainability\nSeverity: Informational\nThroughout the codebase, hard-coded number literals without context or a description are used. Using such 'magic numbers' goes against best practices as they reduce code readability and maintenance as developers are unable to easily understand their use and may make inconsistent changes across the codebase.\nInstances of magic numbers are listed below:\n- pallets/lend-market/src/farming.rs:28\n- pallets/lend-market/src/rate_model.rs:173\nRecommendation\nWe recommend defining magic numbers as constants with descriptive variable names and comments, where necessary.\nStatus: Acknowledged",
-      "description_summary": "Use of magic numbers decreases code readability and maintainability."
+      "description_summary": "Use of magic numbers decreases code readability and maintainability.",
+      "reported_status": "Acknowledged",
+      "is_substrate_finding": true
     },
     {
       "title": "State change events are emitted even if no change has occurred",
@@ -360,7 +394,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Business Logic",
       "description": "18. State change events are emitted even if no change has occurred\nSeverity: Informational\nIn pallets/lend-market/src/lib.rs:778 and pallets/lend-market/src/lib.rs:678, when updating market parameters, the event about success is emitted regardless of whether anything has been changed. If none of the optional values are specified, then the function will end without changing the state, but the MarketRewardSpeedUpdated or UpdatedMarket event will be emitted, which is inconsistent with the function's logic.\nRecommendation\nWe recommend emitting an event only in case the state has been updated.\nStatus: Acknowledged",
-      "description_summary": "State change events are emitted even when no actual change has occurred."
+      "description_summary": "State change events are emitted even when no actual change has occurred.",
+      "reported_status": "Acknowledged",
+      "is_substrate_finding": true
     },
     {
       "title": "Miscellaneous comments",
@@ -387,7 +423,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "19. Miscellaneous comments\nSeverity: Informational\nMiscellaneous recommendations can be found below:\n- In pallets/lend-market/src/lib.rs:1894 there should be an Overflow error, not an Underflow one, causing exchange_rate to be between (0.02, 1) range, so the division of amount value and exchange_rate could cause overflow only.\n- In pallets/lend-market/src/lib.rs:959, it should be used asset, instead of assert.\n- In pallets/leverage-staking/src/lib.rs:129, NotSupportTokenType should be reworded to NotSupportedTokenType.\n- In pallets/lend-market/src/interest.rs:141, the inequality should be greater than or equal to 0.02, not only greater, based on code implementation.\nRecommendation\nWe suggest following the aforementioned suggestions.\nStatus: Resolved",
-      "description_summary": "Various code recommendations to fix minor errors and improve clarity."
+      "description_summary": "Various code recommendations to fix minor errors and improve clarity.",
+      "reported_status": "Resolved",
+      "is_substrate_finding": true
     }
   ]
 }
