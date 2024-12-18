@@ -134,7 +134,7 @@
       "title": "Missing documentation undermines the templates' use-case",
       "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
       "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
-      "reported_remediated_commit": "https://github.com/OpenZeppelin/polkadot-runtime-templates/pull/250",
+      "reported_remediated_commit": "fa017a7204ec60016c0683d4d1ded1b7dbe8f418",
       "location": [
         {
           "file_path": "runtime/src/configs/",
