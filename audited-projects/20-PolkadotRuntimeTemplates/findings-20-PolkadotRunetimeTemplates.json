@@ -8,7 +8,7 @@
       "title": "Runtime template waives XCM message delivery fees",
       "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
       "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
-      "reported_remediated_commit": "83a7448addb1c67e633d0160e8ca2db80ef79e08",
+      "reported_remediated_commit": "30930edda586506d2f18e673d383fa69afab5ed6",
       "location": [
         {
           "file_path": "runtime/src/xcm_configs.rs",
@@ -29,7 +29,7 @@
       "title": "No XCM delivery fees configured for sibling parachain messages",
       "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
       "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
-      "reported_remediated_commit": "f3eedbce767f0b1eb4431cd2559a1c74f9b37786",
+      "reported_remediated_commit": "30930edda586506d2f18e673d383fa69afab5ed6",
       "location": [
         {
           "file_path": "runtime/src/lib.rs",
@@ -50,7 +50,7 @@
       "title": "Incorrect runtime weights for XCM and the Message Queue pallet",
       "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
       "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
-      "reported_remediated_commit": "56f18ec275e3a442c91c67d0257a401f9e8e5c6a",
+      "reported_remediated_commit": "30930edda586506d2f18e673d383fa69afab5ed6",
       "location": [
         {
           "file_path": "runtime/src/xcm_configs.rs",
@@ -71,7 +71,7 @@
       "title": "Insufficient benchmarking for runtime pallets",
       "repository": "https://github.com/OpenZeppelin/polkadot-runtime-templates",
       "audited_commit": "c9a2c76a9db2e114eecaeba07195f9c2bdfaa094",
-      "reported_remediated_commit": "48c6220a4e60d7dcf01c890ff37c81b5bd22d00d",
+      "reported_remediated_commit": "30930edda586506d2f18e673d383fa69afab5ed6",
       "location": [
         {
           "file_path": "runtime/src.rs",
