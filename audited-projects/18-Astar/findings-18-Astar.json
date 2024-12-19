@@ -8,7 +8,7 @@
       "title": "Overflow on The Libsecp256k1",
       "repository": "https://github.com/PlasmNetwork/Astar",
       "audited_commit": "7bb088bd6be8dd8c06823729fbbaf71a507095ab",
-      "reported_remediated_commit": "ac131c781e6fd6866f3dfd7908678de0a701828e",
+      "reported_remediated_commit": "a0e446097557a479cc90e2be969cd45d7f77812b",
       "location": [
         {
           "file_path": "frame/custom-signatures/Cargo.toml",
@@ -29,7 +29,7 @@
       "title": "Lack of Validation in the 'what' Parameter",
       "repository": "https://github.com/PlasmNetwork/Astar",
       "audited_commit": "7bb088bd6be8dd8c06823729fbbaf71a507095ab",
-      "reported_remediated_commit": "ac131c781e6fd6866f3dfd7908678de0a701828e",
+      "reported_remediated_commit": "a0e446097557a479cc90e2be969cd45d7f77812b",
       "location": [
         {
           "file_path": "frame/custom-signatures/src/ethereum.rs",
@@ -50,7 +50,7 @@
       "title": "Cross Chain Replay Attack is Possible",
       "repository": "https://github.com/PlasmNetwork/Astar",
       "audited_commit": "7bb088bd6be8dd8c06823729fbbaf71a507095ab",
-      "reported_remediated_commit": "ac131c781e6fd6866f3dfd7908678de0a701828e",
+      "reported_remediated_commit": "a0e446097557a479cc90e2be969cd45d7f77812b",
       "location": [
         {
           "file_path": "frame/custom-signatures/src/lib.rs",
@@ -71,7 +71,7 @@
       "title": "Order Logic In Nonce Increment",
       "repository": "https://github.com/PlasmNetwork/Astar",
       "audited_commit": "7bb088bd6be8dd8c06823729fbbaf71a507095ab",
-      "reported_remediated_commit": "ac131c781e6fd6866f3dfd7908678de0a701828e",
+      "reported_remediated_commit": "a0e446097557a479cc90e2be969cd45d7f77812b",
       "location": [
         {
           "file_path": "frame/custom-signatures/src/lib.rs",
