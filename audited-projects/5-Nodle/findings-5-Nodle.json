@@ -6,7 +6,7 @@
   "findings": [
     {
       "title": "TCR voting design should be improved",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": null,
       "location": null,
@@ -16,11 +16,13 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Business Logic",
       "description": "3.1 (HAL-01) HAL-01 TCR VOTING DESIGN SHOULD BE IMPROVED - MEDIUM \n Description:\nIt was observed that it is possible to:\n• Vote with 0 amount\n• Challenge yourself\n• Counter yourself\n• Vote for yourself\nBy combining these properties, some scenarios might be possible:\n• A whale can influence any challenge/counter decision by voting for itself.\nA whale can also farm additional tokens upon success by countering any application and then voting to itself.\nBy countering your application and voting with 0 amount, it is possible to fill up the storage since the values are pushed into vector\nTo remove yourself from members in the root of trust.\n\nRisk Level:\nLikelihood - 3\nImpact - 4\n\nRecommendation:\nConsider improving the design by not letting the same account to:\n• Vote to itself\n• Counter itself\n• Challenge itself\n• Vote with 0 deposit\n\nRemediation Plan:\nNOT APPLICABLE: The issue is marked as not applicable by the Nodle team as the TCR and root of trust pallets will be removed.",
-      "description_summary": "TCR voting design allows self-voting, zero-amount votes, and potential manipulation by large token holders."
+      "description_summary": "TCR voting design allows self-voting, zero-amount votes, and potential manipulation by large token holders.",
+      "reported_status": "NOT APPLICABLE: The issue is marked as not applicable by the Nodle team as the tcr and root of trust pallets will be removed.",
+      "is_substrate_finding": true
     },
     {
       "title": "Denomination logic should be improved",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "2db8b4707606bf88b8fdefbe616d67a720e434ea",
       "location": [
@@ -35,11 +37,13 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Business Logic",
       "description": "3.2 (HAL-02) HAL-02 DENOMINATION LOGIC SHOULD BE IMPROVED - MEDIUM\n Description:\nIt was observed that if a nominator has a single validator, it is not possible to remove a validator through nominator_denominate since it has a check for <StakingMinNominatorTotalBond<T>>. In that case, nominator_denominate_all has to be used, which bypasses that check, which is not intentional.\n\nCode Location:\nListing 1: pallets/staking/src/lib.rs\n1 if !do_force {\n   ensure!(\n      remaining >= <StakingMinNominatorTotalBond<T>>::get(),\n      <Error<T>>::NominatorBondBelowMin\n   );\n}\n\nRisk Level:\nLikelihood - 4\nImpact - 2\n\nRecommendation:\nConsider having a conditional statement in nominator_denominate that allows the forced removal of a validator if the nominator has only one validator.\n\nRemediation Plan:\nSOLVED: The issue was solved by the Nodle team.\n• Fix Commit",
-      "description_summary": "Denomination logic bypasses minimum bond check when only one validator is nominated."
+      "description_summary": "Denomination logic bypasses minimum bond check when only one validator is nominated.",
+      "reported_status": "SOLVED",
+      "is_substrate_finding": true
     },
     {
       "title": "Emergency shutdown not used in critical functions",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": null,
       "location": [
@@ -54,11 +58,13 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Denial of Service (DoS) and Spamming",
       "description": "3.3 (HAL-03) HAL-03 EMERGENCY SHUTDOWN NOT USED IN MANY CRITICAL FUNCTIONS - MEDIUM\n Description:\nIt was observed that the emergency shutdown pallet is used only in the allocate function in the allocations pallet. However, there are more public functions across different pallets that might be problematic if, at any point in time, there is a bug (security/non-security) discovered within them. There should be a functionality to shut them down before new fixes are pushed.\n\nCode Location:\nThese functions should have a shutdown functionality:\n\nGrants pallet\n• add_vesting_schedule\n\nStaking pallet\n• validator_join_pool\n• validator_exit_pool\n• validator_bond_more\n• validator_bond_less\n• nominator_nominate\n• nominator_denominate\n• nominator_bond_more\n• nominator_bond_less\n• nominator_move_nomination\n• unbond_frozen\n• withdraw_unbonded\n• withdraw_staking_rewards\n\nRisk Level:\nLikelihood - 3\nImpact - 4\n\nRecommendation:\nConsider enabling shutdown functionality in critical public functions.\n\nExample Code:\nListing 2\n1 ensure!(\n   !pallet_emergency_shutdown :: Pallet::<T>::shutdown(),\n   Error::<T>::UnderShutdown\n);\n\nRemediation Plan:\nPENDING: In a future release, the Nodle team will modify the emergency shutdown pallet to better generalize.",
-      "description_summary": "Emergency shutdown functionality is missing in multiple critical public functions across different pallets."
+      "description_summary": "Emergency shutdown functionality is missing in multiple critical public functions across different pallets.",
+      "reported_status": "PENDING: In a future release, the Nodle team will modify the emergency shutdown pallet to better generalize.",
+      "is_substrate_finding": true
     },
     {
       "title": "Missing sanity checks",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "2db8b4707606bf88b8fdefbe616d67a720e434ea",
       "location": [
@@ -73,11 +79,13 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "3.4 (HAL-04) HAL-04 MISSING SANITY CHECKS - LOW\n Description:\nIt was observed that the set_staking_limits privileged function is missing sanity checks on provided values. Even though it is a protected function, it is still advised to have some sanity checks to avoid any human error.\n\nCode Location:\nListing 3: pallets/staking/src/lib.rs\n201 pub fn set_staking_limits (\n   origin: OriginFor<T>,\n   max_stake_validators: u32,\n   min_stake_session_selection: BalanceOf<T>,\n   min_validator_bond: BalanceOf<T>,\n   min_nominator_total_bond: BalanceOf<T>,\n   min_nominator_chill_threshold: BalanceOf<T>\n) -> DispatchResultWithPostInfo {\n\nRisk Level:\nLikelihood - 3\nImpact - 2\n\nRecommendation:\nIt is recommended to add sanity checks to ensure:\n• max_stake_validators != 0\n• min_stake_session_selection != 0\n• min_validator_bond != 0\n• min_nominator_total_bond != 0\n\nRemediation Plan:\nSOLVED: The issue was solved by the Nodle team.\n• Fix Commit",
-      "description_summary": "Missing sanity checks in set_staking_limits function may allow invalid parameter values."
+      "description_summary": "Missing sanity checks in set_staking_limits function may allow invalid parameter values.",
+      "reported_status": "SOLVED",
+      "is_substrate_finding": true
     },
     {
       "title": "Vesting to yourself is allowed",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "91cfe0cb3300811bb02a47c4cf70f68c7e48f94d",
       "location": [
@@ -92,11 +100,13 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Business Logic",
       "description": "3.5 (HAL-05) HAL-05 VESTING TO YOURSELF IS ALLOWED - LOW\n Description:\nIt was observed that you can create a vesting schedule to yourself.\n\nCode Location:\nListing 4: pallets/grants/src/lib.rs\n157 pub fn add_vesting_schedule (\n   origin: OriginFor<T>,\n   dest: <T::Lookup as StaticLookup>::Source,\n   schedule: VestingScheduleOf<T>\n) -> DispatchResultWithPostInfo {\n   let from = ensure_signed(origin)?;\n   let to = T::Lookup::lookup(dest)?;\n   Self::do_add_vesting_schedule(&from, &to, schedule.clone())?;\n   Self::deposit_event(Event::VestingScheduleAdded(from, to, schedule));\n   Ok(().into())\n}\n\nRisk Level:\nLikelihood - 3\nImpact - 2\n\nRecommendation:\nPlease add a check that ensures that from != to in fn add_vesting_schedule.\n\nRemediation Plan:\nSOLVED: The issue was solved by the Nodle team.\n• Fix Commit",
-      "description_summary": "Vesting schedule allows setting up a vesting to oneself without restrictions."
+      "description_summary": "Vesting schedule allows setting up a vesting to oneself without restrictions.",
+      "reported_status": "SOLVED",
+      "is_substrate_finding": true
     },
     {
       "title": "Missing zero value check",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "f31c19a06ab0047f0c533c83ba67654eedfa6147",
       "location": [
@@ -111,11 +121,13 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Error Handling and Validation",
       "description": "3.6 (HAL-06) HAL-06 MISSING ZERO VALUE CHECK - LOW\n Description:\nIt was observed that the allocate function should have a zero value check on the amount argument.\n\nCode Location:\nListing 5: pallets/grants/src/lib.rs (Line 88)\n85 pub fn allocate (\n   origin: OriginFor<T>,\n   to: T::AccountId,\n   amount: BalanceOf<T>,\n   proof: Vec<u8>\n) -> DispatchResultWithPostInfo {\n   Self::ensure_oracle(origin)?;\n   ...\n\nRisk Level:\nLikelihood - 2\nImpact - 2\n\nRecommendation:\nConsider adding zero value checks to these functions to avoid performing redundant operations if a zero value is received.\n\nRemediation Plan:\nSOLVED: The issue was solved by the Nodle team.\n• Fix Commit",
-      "description_summary": "Allocate function lacks a zero-value check for the amount argument."
+      "description_summary": "Allocate function lacks a zero-value check for the amount argument.",
+      "reported_status": "SOLVED",
+      "is_substrate_finding": true
     },
     {
       "title": "Vesting schedules less than a current block can be created",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": null,
       "location": null,
@@ -125,11 +137,13 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Business Logic",
       "description": "3.7 (HAL-07) HAL-07 VESTING SCHEDULES LESS THAN A CURRENT BLOCK CAN BE CREATED - INFORMATIONAL\n Description:\nIt was observed that the pallet allows the creation of vesting schedules that are less than the current block number. Those vesting schedules are not more than the regular transfers with extra steps. Therefore, those are redundant.\n\nExample:\nListing 6\n1 Current Block: 100\n\n3 Vesting Schedule Start: 1st Block\n5 Period: 10 Blocks\n7 Period_count: 2\n9 Per Period: 1 knodl\n\n13 Vesting Duration: 10 * 2 + 1 = 21 Blocks\n14 Initial Transfer sent: 2 knodl\n16 Next Claims: 0 since Vesting Duration < Current Block\n\nRisk Level:\nLikelihood - 1\nImpact - 1\n\nRecommendation:\nConsider adding a check that ensures that:\n(period * period_count) + start > current_block_number\n\nRemediation Plan:\nNOT APPLICABLE: The issue was marked as not applicable by the Nodle team, stating:\nThis can be useful to keep as it is. In fact, we may have to create retroactive awards that may have been partially vested.",
-      "description_summary": "Vesting schedules can be created with start blocks earlier than the current block, making them redundant."
+      "description_summary": "Vesting schedules can be created with start blocks earlier than the current block, making them redundant.",
+      "reported_status": "NOT APPLICABLE: The issue was marked as not applicable by the Nodle team saying: This can be useful to keep it as it is. In fact, we may have to create retroactive awards that may have been partially vested.",
+      "is_substrate_finding": true
     },
     {
       "title": "Redundant check",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "91cfe0cb3300811bb02a47c4cf70f68c7e48f94d",
       "location": [
@@ -144,11 +158,13 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "3.8 (HAL-08) HAL-08 REDUNDANT CHECK - INFORMATIONAL\n Description:\nIt was observed that the grants pallet contains a redundant check.\n\nCode Location:\nThere is no need for a second new_lock.is_zero() since it was already checked prior. Removing of the vestingSchedule can be performed within the first check.\n\nListing 7: pallets/grants/src/lib.rs (Line 253)\n247 if new_lock . is_zero () {\n248 T :: Currency :: remove_lock ( VESTING_LOCK_ID , & target );\n249 }\n250 else {\n251 T :: Currency :: set_lock ( VESTING_LOCK_ID , & target , new_lock , WithdrawReasons :: all () );\n252 }\n253 if new_lock . is_zero () {\n254 // No more claimable , clear\n255 VestingSchedules :: <T >:: remove ( target . clone () );\n256 }\n257 else {\n258 T :: Currency :: set_lock ( VESTING_LOCK_ID , & target , new_lock , WithdrawReasons :: all () );\n}\n\nRisk Level:\nLikelihood - 1\nImpact - 1\n\nRecommendation:\nPlease remove the second new_lock.is_zero() check and remove the vestingSchedule within the first check.\n\nListing 8: pallets/grants/src/lib.rs\n247 if new_lock . is_zero () {\n248 T :: Currency :: remove_lock ( VESTING_LOCK_ID , & target );\n249 VestingSchedules :: <T >:: remove ( target . clone () );\n250 }\n251 else {\n252 T :: Currency :: set_lock ( VESTING_LOCK_ID , & target , new_lock , WithdrawReasons :: all () );\n\nRemediation Plan:\nSOLVED: The issue was solved by the Nodle team.\n• Fix Commit",
-      "description_summary": "Redundant check of new_lock.is_zero() found in grants pallet."
+      "description_summary": "Redundant check of new_lock.is_zero() found in grants pallet.",
+      "reported_status": "SOLVED",
+      "is_substrate_finding": true
     },
     {
       "title": "Redundant variable",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "91cfe0cb3300811bb02a47c4cf70f68c7e48f94d",
       "location": [
@@ -163,11 +179,13 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "3.9 (HAL-09) HAL-09 REDUNDANT VARIABLE - INFORMATIONAL\n Description:\nIt was observed that the old1 variable in on_finalize function in tcr pallet is redundant. Tuple returned from commit_applications is Ok(( new_members, Vec::new())). Therefore, old1 is always going to be an empty vector. Hence, extending it with old2 does not make any difference. In this scenario, we only care about new_1.\n\nCode Location:\nListing 9: pallets/tcr/src/lib.rs\n138 fn on_finalize ( block : T :: BlockNumber ) {\n139 let ( mut new_1 , mut old_1 ) =\n140 Self :: commit_applications ( block ) . unwrap_or (( Vec :: new () , Vec :: new () ) );\n141 let ( new_2 , old_2 ) =\n142 Self :: resolve_challenges ( block ). unwrap_or (( Vec :: new () , Vec :: new () ) );\n143 // Should never be the same , so should not need some uniq checks\n145 new_1 . extend ( new_2 ) ;\n146 old_1 . extend ( old_2 ) ;\n148 new_1 . sort () ;\n149 old_1 . sort () ;\n151 Self :: notify_members_change ( new_1 , old_1 ) ;\n\nListing 10: pallets/tcr/src/lib.rs (Line 478)\n460 fn commit_applications ( block : T :: BlockNumber ) -> FinalizeHelperResultFrom <T > {\n461 let new_members = < Applications <T , I > >:: iter ()\n462 . filter (|( _account_id , application )| {\n463 block\n464 . checked_sub (& application . clone () . created_block )\n465 . expect ( \" created_block should always be smaller than block ; qed \")\n466 >= T :: FinalizeApplicationPeriod :: get ()\n})\n468 . map (|( account_id , application ) | {\n469 < Applications <T , I > >:: remove ( account_id . clone () );\n470 < Members <T , I > >:: insert ( account_id . clone () , application . clone () ) ;\n471 Self :: unreserve_for ( account_id . clone () , application . candidate_deposit );\n472 Self :: deposit_event ( Event :: ApplicationPassed ( account_id . clone () ) ) ;\n474 account_id\n475 })\n476 . collect :: < Vec <T :: AccountId > >() ;\n478 Ok (( new_members , Vec :: new () ) ) // === HERE ===\n}\n\nRisk Level:\nLikelihood - 1\nImpact - 1\n\nRecommendation:\nConsider omitting old1 and remove all actions performed on it.\n\nListing 11: pallets/tcr/src/lib.rs\n247 fn on_finalize ( block : T :: BlockNumber ) {\n248 let ( mut new_1 , _ ) =\n249 Self :: commit_applications ( block ) . unwrap_or (( Vec :: new () , Vec :: new () ) );\n250 let ( new_2 , mut old ) =\n251 Self :: resolve_challenges ( block ). unwrap_or (( Vec :: new () , Vec :: new () ) );\n253 // Should never be the same , so should not need some uniq checks\n254 new_1 . extend ( new_2 ) ;\n257 new_1 . sort () ;\n258 old . sort () ;\n260 Self :: notify_members_change ( new_1 , old ) ;\n\nRemediation Plan:\nSOLVED: The issue was solved by the Nodle team.\n• Fix Commit",
-      "description_summary": "Redundant variable old1 in on_finalize function."
+      "description_summary": "Redundant variable old1 in on_finalize function.",
+      "reported_status": "SOLVED",
+      "is_substrate_finding": true
     },
     {
       "title": "Usage of vulnerable crates",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": null,
       "location": null,
@@ -177,11 +195,13 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Dependency",
       "description": "3.10 (HAL-10) HAL-10 USAGE OF VULNERABLE CRATES - INFORMATIONAL\n Description:\nIt was observed that the project uses crates with known vulnerabilities.\n\nCode Location:\nID\nRUSTSEC-2020-0159\nRUSTSEC-2020-0071\nRUSTSEC-2021-0130\nRUSTSEC-2021-0067\nRUSTSEC-2021-009\nRUSTSEC-2021-0079\nRUSTSEC-2021-0078\nRUSTSEC-2021-0076\nRUSTSEC-2021-0070\nRUSTSEC-2021-0073\nRUSTSEC-2021-0013\nRUSTSEC-2021-0089\nRUSTSEC-2021-0124\nRUSTSEC-2021-0110\nRUSTSEC-2021-0115\n\nFINDINGS & TECH DETAILS\npackage: chrono\nShort Description: Potential segfault in 'localtime_r' invocations\npackage: time\nShort Description: Potential segfault in the time crate\npackage: lru\nShort Description: Use after free in lru crate\npackage: cranelift-codegen\nShort Description: Memory access due to code generation flaw in Cranelift module\npackage: crossbeam-deque\nShort Description: Data race in crossbeam-deque\npackage: hyper\nShort Description: Integer overflow in hyper's parsing of the Transfer-Encoding header leads to data loss\npackage: hyper\nShort Description: Lenient hyper header parsing of Content-Length could allow request smuggling\npackage: libsecp256k1\nShort Description: libsecp256k1 allows overflowing signatures\npackage: nalgebra\nShort Description: VecStorage Deserialize Allows Violation of Length Invariant\npackage: prost-types\nShort Description: Conversion from prost_types::Timestamp to SystemTime can cause an overflow and panic\npackage: raw-cpuid\nShort Description: Soundness issues in raw-cpuid\npackage: raw-cpuid\nShort Description: Optional Deserialize implementations lacking validation\npackage: tokio\nShort Description: Data race when sending and receiving after closing a oneshot channel\npackage: wasmtime\nShort Description: Multiple Vulnerabilities in Wasmtime\npackage: zeroize-derive\nShort Description: #[zeroize(drop)] doesn’t implement Drop for enums\n\nRisk Level:\nLikelihood - 2\nImpact - 1\n\nRecommendation:\nEven if those vulnerable crates cannot impact the underlying application, it is advised to be aware of them and attempt to update them to non-vulnerable versions. Furthermore, it is necessary to set up dependency monitoring to always be alerted when a new vulnerability is disclosed in one of the project’s crates.\n\nRemediation Plan:\nACKNOWLEDGED: The issue was acknowledged by the Nodle team and will be fixed later.",
-      "description_summary": "Usage of crates with known vulnerabilities identified."
+      "description_summary": "Usage of crates with known vulnerabilities identified.",
+      "reported_status": "ACKNOWLEDGED",
+      "is_substrate_finding": true
     },
     {
       "title": "Outdated Rust edition",
-      "repository": "https://github.com/NodleCode/chain/",
+      "repository": "https://github.com/NodleCode/chain",
       "audited_commit": "de356170bfe2eb9f537e3c4861d6752dd099f43e",
       "reported_remediated_commit": "41ce7de56ff6dd701de1f5d247c91aaff6803954",
       "location": [
@@ -196,7 +216,9 @@
       "vulnerability_class_audit": null,
       "vulnerability_class_scout": "Code Quality",
       "description": "3.11 (HAL-11) HAL-11 OUTDATED RUST EDITION - INFORMATIONAL\n Description:\nIt was observed that the project is using outdated rust edition (2018). Recently, 2021 rust edition came out, which includes a lot of stability improvements and new features that might make the code more readable.\n\nCode Location:\n• Cargo.toml\n\nRisk Level:\nLikelihood - 1\nImpact - 1\n\nRecommendation:\nConsider updating the Rust to the latest edition to use the latest features and stability improvements.\n\nReference:\nRust 2021 Edition Guide\n\nRemediation Plan:\nSOLVED: The issue was solved by the Nodle team.\n• Fix Commit",
-      "description_summary": "Project is using an outdated Rust edition (2018)."
+      "description_summary": "Project is using an outdated Rust edition (2018).",
+      "reported_status": "SOLVED",
+      "is_substrate_finding": true
     }
   ]
 }

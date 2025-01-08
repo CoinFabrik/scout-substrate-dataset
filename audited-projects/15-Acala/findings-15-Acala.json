@@ -1,0 +1,331 @@
+{
+  "audited_project_id": 15,
+  "project_name": "Acala",
+  "auditor": "Code4Arena",
+  "audit_link": "https://dotpal.io/assets/files/acala-c4-2401-b63c6608d331de3f06fa256b22556968.pdf",
+  "findings": [
+    {
+      "title": "transfer_share_and_rewards allows for self transfer",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/orml/rewards/src/lib.rs",
+          "lines": [326]
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "[H-01] transfer_share_and_rewards allows for self transfer\nSubmitted by ZanyBonzy, also found by ihtishamsudo\nThe rewards library holds the transfer_share_and_rewards allows for self transfer which can be used to double shares and rewards. Important to note that the function, for now is not in use by the in-scope contracts. However, I still believe it’s worth pointing out.\nProof of Concept\nCopy and paste the below test into tests.rs. It shows how users Alice and Bob, by invoking this function, can increase their share/rewards balance.\nfn transfer_to_self() {\n  ExtBuilder::default().build().execute_with(|| {\n    // Open a pool with bob holding 100 shares in the pool\n    RewardsModule::add_share(&BOB, &DOT_POOL);\n    // Accumulate rewards\n    assert_ok!(RewardsModule::accumulate_reward);\n    // Alice deposits into the pool and gets shares\n    RewardsModule::add_share(&ALICE, &DOT_POOL);\n    // Assert that rewards still exist\n    assert_ok!(RewardsModule::accumulate_reward);\n    // Gets pools info\n    let pool_info = RewardsModule::pool_infos;\n    // Ensures that reward transfer doesn't affect pool\n    let new_pool_info = RewardsModule::pool_infos;\n    assert_eq!(pool_info, new_pool_info, \"reward transfer does not affect the pool\");\n    // Assert that Alice's share/rewards transfer to self succeeds\n    assert_ok!(RewardsModule::transfer_share_and_rewards);\n    // Assert that Alice's share/reward balance has now increased\n    assert_eq!(RewardsModule::shares_and_withdrawn_rewards, (190, vec![(NATIVE_COIN, 190)].into_iter));\n    // Alice has discovered infinite money glitch? She tries again...\n    assert_ok!(RewardsModule::transfer_share_and_rewards);\n    assert_eq!(RewardsModule::shares_and_withdrawn_rewards, (370, vec![(NATIVE_COIN, 370)].into_iter));\n    // She transfers some of her shares/rewards to Bob\n    assert_ok!(RewardsModule::transfer_share_and_rewards);\n    assert_eq!(RewardsModule::shares_and_withdrawn_rewards, (300, vec![(NATIVE_COIN, 300)].into_iter));\n    assert_eq!(RewardsModule::shares_and_withdrawn_rewards, (170, vec![(NATIVE_COIN, 70)].into_iter));\n    // Bob decides to try it out himself\n    assert_ok!(RewardsModule::transfer_share_and_rewards);\n    assert_eq!(RewardsModule::shares_and_withdrawn_rewards, (270, vec![(NATIVE_COIN, 111)].into_iter));\n    assert_ok!(RewardsModule::transfer_share_and_rewards);\n    assert_eq!(RewardsModule::shares_and_withdrawn_rewards, (370, vec![(NATIVE_COIN, 152)].into_iter));\n  });\n}\nRecommended Mitigation Steps\nInclude a check in the function that returns if who == other.\nLambda (judge) increased severity to High.\nxlc (Acala) confirmed and commented:\nFixed by this PR. Just want to highlight that transfer_share_and_rewards is not currently used.",
+      "description_summary": "The transfer_share_and_rewards function allows self-transfer, enabling users to double their shares and rewards, posing a high-severity risk.",
+      "reported_status": "Fixed by [this PR](https://github.com/open-web3-stack/open-runtime-module-library/pull/990). Just want to highlight that transfer_share_and_rewards is not currently used.",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Early user can break pool via inflation attack due to no minimum liquidity check in the incentive contract",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/modules/incentives/src/lib.rs",
+          "lines": [{ "from": 511, "to": 523 }]
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "[H-02] Early user can break pool via inflation attack due to no minimum liquidity check in the incentive contract\nSubmitted by carrotsmuggler, also found by zhaojie\nThe incentive contract does not enforce a minimum liquidity limit. This means users can have as little as 1 share in the pool. This can lead to inflation attacks as described below.\nLet’s imagine the state of the pool is as follows:\nThere is a single depositor, with 1000 shares deposited. Rewards have been accumulated up to 500 tokens. The user can then withdraw 998 shares, leaving 2 shares. They will also claim the rewards, and leave 1 reward token in the pool. This is the setup for the inflation attack. The user can then deposit 1 share.\nThe inflation is calculated as shown below:\nU256::from(add_amount.to_owned().saturated_into::<u128>()).saturating_mul(total_reward.to_owned().saturated_into).checked_div(initial_total_shares.to_owned().saturated_into.unwrap_or_default().as_u128().saturated_into()\nHere total_reward=1, add_amount=1 and initial_total_shares=2. So the result is calculated to 0; so inflation is 0.\nAfter this step, the initial_total_shares is updated to 3. Now the user can deposit 2 wei of shares without changing the inflation amount. Next iteration, they can deposit 4 shares. This way, the user can deposit 2**n shares each iteration, and inflate the initial_total_shares without affecting the reward inflation. This leads to the situation where the total_shares keeps growing according to the deposit, but the entire reward inflation mechanism is broken. This lets users steal reward tokens from other users, and is a high-severity issue.\nIn fact, whenever the total_reward value is less than the total_shares, this issue can be triggered. This is because in those conditions, users can create deposits and have the reward_inflation evaluate to 0. A reward_inflation of 0 basically means later users can steal rewards of earlier users, as is outlined in the docs. However, this donation attack is more effective the lower the total_shares in the system.\nProof of Concept\nThe situation can be created via the following steps:\n1. Since there is no minimum deposit, we can create a situation where total_reward < total_shares and total_shares = 2. This also works for higher values of total_shares but is most potent at this stage.\n2. User deposits 1 share, or any number of shares as long as deposit * total_reward / total_shares is less than 1. The reward_inflation will be 0, while the user gets their shares accounted for.\n3. Since total_shares has now increased, the user can deposit more shares and still have the reward_inflation be 0. This way, the user can keep depositing shares and increasing the total_shares without affecting the reward inflation.\n4. Since reward_inflation and thus total_reward has not increased, but total_shares has increased, users will lose rewards, since the rewards are calculated as total_reward * user_shares / total_shares. This means older users lose shares.\nWhile this vector is generally applicable and can lead to small losses when there’s a lot of liquidity, this becomes more potent when there is very low liquidity in the pool. This was the method of attack for the Wise Lending hack and is a high-severity issue. More details can be found in the blog post outlining the attack scenario with more numbers and examples.\nTools Used\nSubstrate\nRecommended Mitigation Steps\nAdd a minimum liquidity limit. This will ensure the pool never reaches a liquidity amount so low that rounding errors become significant.\nxlc (Acala) confirmed and commented:\nIt is actually almost impossible to trigger this in production because anyone can deposit into the incentives pool at any time, i.e., before rewards start accumulating.\nFixed by this PR.",
+      "description_summary": "The incentive contract allows deposits with no minimum liquidity, enabling an inflation attack where users can inflate share counts and steal rewards from others.",
+      "reported_status": "Fixed by [this PR](https://github.com/open-web3-stack/open-runtime-module-library/pull/991).",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "transfer_share_and_rewards can be used to transfer out shares without transferring reward debt due to rounding",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/orml/rewards/src/lib.rs",
+          "lines": [{ "from": 341, "to": 343 }]
+        }
+      ],
+      "reported_impact": "High",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "Math",
+      "vulnerability_class_scout": "Arithmetic",
+      "description": "[H-03] transfer_share_and_rewards can be used to transfer out shares without transferring reward debt due to rounding\nSubmitted by carrotsmuggler, also found by AM\nThe function transfer_share_and_rewards can be used to split up the position in a single account into multiple accounts. The contract sends some of the shares to be held by the second account, and similarly also updates the reward debt of the receiving account so that the receiver cannot take out more rewards than they deserve.\nThis is calculated in the following snippet. move_balance is the amount of the reward debt that is to be transferred to the receiver.\nlet move_balance = U256::from(balance.to_owned().saturated_into) * U256::from(move_share.to_owned().saturated_into::<u128>) / U256::from(share.to_owned().saturated_into::<u128>());\nHere we see the calculation is simple and by default is rounded down. So if balance * move_share is lower than share, move_balance evaluates to 0. So the receiving account’s reward debt is not increased at all!\nincreased_rewards.entry(*reward_currency).and_modify(|increased_reward| {\n  *increased_reward = increased_reward.saturating_add\n});\nSince move_balance is 0, the increased_reward is not updated. This means the new account now has shares, but no reward debt. So the receiving account can claim rewards that were already claimed.\nThis can be done multiple times to drain the reward pool.\nThe criteria is that balance * move_share has to be lower than share. This can be achieved by sending a small fraction of the funds to the receiving account, such that move_share is much lower than share. Also, if balance, the reward debt of the sender, is low, this facilitates the attack more.\nProof of Concept\nA short POC is shown here demonstrating the issue. The attacker sends to the receiver a small share of their total. The receiver is shown to have no reward debt, while the sender does have reward debt. This shows that the receiver can claim rewards already claimed by the sender.\n#[test]\nfn test_rounding() {\n  ExtBuilder::default().build().execute_with(|| {\n    RewardsModule::add_share(&ALICE, &DOT_POOL, 1000);\n    assert_ok!(RewardsModule::accumulate_reward(&DOT_POOL, NATIVE_COIN));\n    RewardsModule::claim_rewards(&ALICE, &DOT_POOL);\n    let user_stat = RewardsModule::shares_and_withdrawn_rewards;\n    println!(\"ALICE stat before transfer: {:?}\", user_stat);\n    let user_stat = RewardsModule::shares_and_withdrawn_rewards;\n    println!(\"BOB stat before transfer: {:?}\", user_stat);\n    assert_ok!(RewardsModule::transfer_share_and_rewards(&ALICE, &DOT_POOL));\n    let user_stat = RewardsModule::shares_and_withdrawn_rewards;\n    println!(\"ALICE stat after transfer: {:?}\", user_stat);\n    let user_stat = RewardsModule::shares_and_withdrawn_rewards;\n    println!(\"BOB stat after transfer: {:?}\", user_stat);\n  });\n}\nOutput:\n# Output is of the form ( ${share_balance}, {0: ${reward_debt}} )\nALICE stat before transfer: (1000, {0: 100})\nBOB stat before transfer: (0, {})\nALICE stat after transfer: (995, {0: 100})\nBOB stat after transfer: (5, {0: 0})\ntest tests::test_rounding ... ok\nThe output shows that ALICE has 1000 shares and 100 reward debt, since ALICE just claimed her rewards. Alice sends BOB 5 shares. BOB ends up with 5 shares and 0 reward debt. So BOB can claim rewards again, even though it’s the same money!\nTools Used\nSubstrate\nRecommended Mitigation Steps\nThe calculation of move_balance should be changed to saturated round up instead of rounding down. This will ensure that the receiving account’s reward debt is updated correctly. The saturated rounding up is important since the reward debt should never be larger than the reward pool, or it will cause underflow errors when subtracting.\nAnother option is to revert transfer_share_and_rewards operations if the reward debt of the receiving account is calculated to be 0, unless the sending account ALSO has a reward debt of 0.\nAssessed type\nMath\nxlc (Acala) confirmed and commented:\nJust want to highlight that transfer_share_and_rewards is not currently used.\nWe will choose to not fix this issue as the impact is relatively small and a complete fix is non-trivial. I don’t think it is possible to make a profit that is more than the transaction fee anyway.",
+      "description_summary": "The transfer_share_and_rewards function can be exploited to transfer shares without updating reward debt, allowing users to drain the reward pool.",
+      "reported_status": "Just want to highlight that transfer_share_and_rewards is not currently used. We will choose to not fix this issue as the impact are relatively small and a complete fix is non-trivial. I don’t think it is possible to make profit that is more than transaction fee anyway.",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Claiming rewards while the deduction rate is != 0 , allows for repeated withdrawal of redistributed rewards",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/modules/incentives/src/lib.rs",
+          "lines": [{ "from": 451, "to": 457 }]
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "[M-01] Claiming rewards while the deduction rate is != 0 allows for repeated withdrawal of redistributed rewards\nSubmitted by n4nika, also found by ABAIKUNANBAEV and djxploit\nIf a participant in a pool claims rewards while the deduction rate is not equal to 0, the deducted rewards are redistributed between all participants.\n\nfn payout_reward_and_reaccumulate_reward(\n  pool_id: PoolId,\n  who: &T::AccountId,\n  reward_currency_id: CurrencyId,\n  payout_amount: Balance,\n  reaccumulate_amount: Balance,\n) -> DispatchResult {\n  if !reaccumulate_amount.is_zero() {\n    <orml_rewards::Pallet<T>>::accumulate_reward\n  }\n  T::Currency::transfer(reward_currency_id, &Self::\n  Ok(())\n}\n\nSince the deduction is redistributed between all participants (including the one claiming the reward), they can repeatedly claim rewards and receive more from the rewards pool than intended.\n\nProof of Concept:\n\n#[test]\nfn repeated_claiming() {\n  ExtBuilder::default().build().execute_with(|| {\n    assert_ok!(TokensModule::deposit(BTC, &VAULT::get()));\n    assert_ok!(IncentivesModule::update_claim_reward_deduction(RuntimeOrigin::signed(ROOT::get()), vec![(PoolId::Dex(BTC_AUSD_LP), Rate::new(400)]));\n    \n    // 40% deduction rate\n    assert_ok!(IncentivesModule::update_claim_reward_deduction(RuntimeOrigin::signed(ROOT::get()), vec![(PoolId::Dex(BTC_AUSD_LP), Rate::new(400)]));\n\n    // Add participants with equal shares\n    TokensModule::deposit(BTC_AUSD_LP, &ALICE::get());\n    TokensModule::deposit(BTC_AUSD_LP, &BOB::get());\n    IncentivesModule::update_incentive_rewards();\n\n    // ALICE claims her reward and should receive the full deduction-adjusted amount\n    assert_ok!(IncentivesModule::claim_rewards(&ALICE));\n    let btc_before = TokensModule::total_balance();\n\n    // ALICE claims again after redistribution\n    assert_ok!(IncentivesModule::claim_rewards(&ALICE));\n    let btc_after = TokensModule::total_balance();\n\n    assert_eq!(btc_before, btc_after);\n  });\n}\n\nRecommended Mitigation Steps:\nAdd the claiming user to accumulate_rewards and implement reaccumulating rewards excluding the calling user.\n\nxlc (Acala) disputed and commented: This is intended behavior and not an issue.",
+      "description_summary": "Participants can repeatedly claim redistributed rewards when the deduction rate is not zero, allowing them to gain more rewards than intended.",
+      "reported_status": "This is intended behaviour and non issue.",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Incentive accumulation can be sandwiched with additional shares to gain advantage over long-term depositors",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/modules/incentives/src/lib.rs",
+          "lines": [{ "from": 188, "to": 217 }]
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": "MEV",
+      "vulnerability_class_scout": "Business Logic",
+      "description": "[M-02] Incentive accumulation can be sandwiched with additional shares to gain advantage over long-term depositors\nSubmitted by 0xTheC0der, also found by zhaojie, djxploit, and carrotsmuggler\nIncentives are accumulated periodically in intervals of T::AccumulatePeriod blocks. A fixed incentive reward amount, which is set via update_incentive_rewards(...), is accumulated among all deposited shares of a respective pool. If only 1 share is deposited, it is entitled to all the rewards of this period; if N shares are deposited, the rewards are split among them.\nTo be eligible for rewards, it is sufficient to deposit (DEX) shares before accumulate_incentives(...) is called via the on_initialize hook. Afterward, rewards can be immediately claimed, and (DEX) shares can be withdrawn without any unbonding period or other block/time-related restrictions.\n\nConsequences:\n• Users can sandwich the incentive accumulation via deposit, claim, and withdraw.\n• Adversaries can borrow vast amounts of (DEX) shares to crowd out honest users during incentive accumulation and gain an unfairly high share of the fixed rewards.\n\nProof of Concept:\nThe provided diff modifies the existing test case transfer_reward_and_update_rewards_storage_atomically_when_accumulate_incentives_work() to demonstrate that the same total reward amount is accumulated even if twice as many total shares are deposited.\n\n```diff\n@@ -1171,10 +1171,11 @@ fn transfer_reward_and_update_rewards_stora\n  assert_eq!(TokensModule::free_balance(AUSD, &VAULT);\n  RewardsModule::add_share(&ALICE::get(), &PoolId::Loans);\n+\n  RewardsModule::add_share(&BOB::get(), &PoolId::Loans);\n  assert_eq!(\n    RewardsModule::pool_infos(PoolId::Loans(LDO)),\n    PoolInfo {\n-      total_shares: 1,\n+      total_shares: 2,\n      ..Default::default()\n    }\n  );\n```\n\nRecommended Mitigation Steps:\nTrack deposited shares in between accumulation intervals and scale the incentive rewards according to the actual deposit duration.\n\nAssessed type: MEV\nxlc (Acala) disputed and commented: To exploit this, an attacker would need to acquire a large number of DEX shares and wait for a block, which incurs costs. It is economically unfeasible to profit from this behavior.\nLambda (judge) commented: While external conditions (like liquidity availability) may not always align, the described scenario demonstrates a valid medium severity leak under reasonable assumptions.",
+      "description_summary": "Incentive rewards can be exploited by depositing and withdrawing large shares around accumulation periods, crowding out long-term depositors.",
+      "reported_status": null,
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Unbond_instant removes incorrect amount of shares",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/modules/earning/src/lib.rs",
+          "lines": [{ "from": 188, "to": 196 }]
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "[M-03] Unbond_instant removes incorrect amount of shares\nSubmitted by TheSchnilch, also found by Aymen0909\nWith unbond_instant, a user can unbond a bonded amount directly without having to wait. However, they must pay a fee for this:\n\nlet amount = change.change;\nlet fee = fee_ratio.mul_ceil(amount);\nlet final_amount = amount.saturating_sub(fee);\nlet unbalance = T::Currency::withdraw(&who, fee, WithdrawReasons::T);\nT::OnUnstakeFee::on_unbalanced(unbalance);\nT::OnUnbonded::happened(&(who.clone(), final_amount));\n\nHere, the mistake is that T::OnUnbonded::happened is called with final_amount, meaning without a fee. As a result, a portion of the shares that were added as shares during bonding can no longer be removed. This, in turn, leads to these shares still receiving rewards that other users cannot receive.\n\nIf you insert a println! statement into the functions bond and unbond_instant to display the amounts with which OnBonded::happened and OnUnbonded::happened are called, you will see when you execute the following code that not all shares are removed when the bonded amount of a user is removed with unbond_instant:\n\nFor bond:\n+ println!(\"change.change: {:?}\", change.change);\nT::OnBonded::happened(&(who.clone(), change.change));\nSelf::deposit_event(Event::Bonded { who, amount: change.change });\n\nFor unbond_instant:\n+ println!(\"final_amount: {:?}\", final_amount);\nT::OnUnbonded::happened(&(who.clone(), final_amount));\nSelf::deposit_event(Event::InstantUnbonded { who, amount: final_amount, fee });\n\nCode to test both functions:\n#[test]\nfn poc() {\n  ExtBuilder::default().build().execute_with(|| {\n    assert_ok!(Earning::bond(RuntimeOrigin::signed(...)));\n    assert_ok!(Earning::unbond_instant(RuntimeOrigin::signed(...)));\n  });\n}\n\nThe code can be executed with the command: cargo test poc -- --nocapture.\n\nImpact:\nEvery time a user calls unbond_instant, some shares will remain in the reward system and continue to accumulate rewards that other users who actually bond can no longer get. These shares can no longer be removed and are stuck. With a maximum fee of 20%, some shares could accumulate over time and continue to accumulate rewards. The owners of these stuck shares can still claim these rewards, causing an imbalance where one share is no longer equivalent to one underlying token.\n\nRecommendation:\nFor unbond_instant, the final_amount should not be used to remove the shares, but change.change should be used instead.\n\nxlc (Acala) confirmed and commented: See the fix here.",
+      "description_summary": "The unbond_instant function removes fewer shares than intended due to an incorrect fee deduction, causing stuck shares to accumulate rewards unfairly.",
+      "reported_status": "See the fix [here](https://github.com/AcalaNetwork/Acala/pull/2735).",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Storage can be bloated with low liquidity positions",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/modules/incentives/src/lib.rs",
+          "lines": [230]
+        }
+      ],
+      "reported_impact": "Medium",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Denial of Service (DoS) and Spamming",
+      "description": "[M-04] Storage can be bloated with low liquidity positions\nSubmitted by ZanyBonzy, also found by Bauchibred and carrotsmuggler\nThe deposit_dex_share function enforces no minimum amount that can be deposited into the pool, allowing for the creation of multiple low-liquidity positions. This enables a coordinated effort where users or attackers, for a relatively low cost, can create numerous low-liquidity positions, bloating the runtime storage.\n\nThis issue is significant as the Substrate framework requires storage optimization to prevent bloat, which can lead to high maintenance costs for the chain and potential denial-of-service (DoS) attacks.\n\nProof of Concept:\nThe test case below demonstrates how a user can create multiple 1 wei positions:\n\n#[test]\nfn open_low_liquidity_positions() {\n  ExtBuilder::default().build().execute_with(|| {\n    assert_ok!(TokensModule::deposit(BTC_AUSD_LP, &ALICE::get(), 1));\n    assert_ok!(IncentivesModule::deposit_dex_share(RuntimeOrigin::signed(ALICE::get()), BTC_AUSD_LP, 1));\n    assert_ok!(IncentivesModule::deposit_dex_share(RuntimeOrigin::signed(ALICE::get()), BTC_AUSD_LP, 1));\n    assert_ok!(IncentivesModule::deposit_dex_share(RuntimeOrigin::signed(ALICE::get()), BTC_AUSD_LP, 1));\n    assert_eq!(RewardsModule::pool_infos(PoolId::Dex(BTC_AUSD_LP)).total_shares, 3);\n  });\n}\n\nThe user creates three 1 wei positions, effectively bloating the pool's storage with minimal cost.\n\nRecommended Mitigation Steps:\nIntroduce a minimum deposit amount to prevent the creation of low-liquidity positions.\n\nxlc (Acala) confirmed and commented: Fixed here.",
+      "description_summary": "The deposit_dex_share function allows creating multiple low-liquidity positions, leading to storage bloat and potential denial-of-service risks.",
+      "reported_status": "Fixed [here](https://github.com/open-web3-stack/open-runtime-module-library/pull/991).",
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Admin is a single point of failure",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "/src/modules/incentives/src/lib.rs",
+          "lines": [{ "from": 83, "to": 85 }]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "[01] Admin is a single point of failure\nMultiple instances in code where the admin logic could lead to a brick in normal functionality.\nFor example, take a look here.\n The origin which may update incentive related p\ntype UpdateOrigin: EnsureOrigin<Self::RuntimeOrigin\nThis is an instance where a somewhat admin logic has been applied, note that this is passed in the config’s constant paller. Now using this search command, we can see that there are three function calls where the expected caller is only accepted to be the update incentive related params.\nImpact\nInaccess to update incentive related params if anything was to happen to the UpdateOrigin.\nRecommended Mitigation Steps\nConsider implementing a backdoor that the admins could use to change the incentive related params if anything were to happen to UpdateOrigin.",
+      "description_summary": "Admin logic creates a single point of failure, risking loss of access to update incentive-related parameters if the UpdateOrigin becomes inaccessible.",
+      "reported_status": null,
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Consider adding better documentation",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "/src/orml/rewards/src/lib.rs",
+          "lines": [{ "from": 143, "to": 190 }]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Code Quality",
+      "description": "[02] Consider adding better documentation\nThis is very rampant in code, for example, take a look here.\npub fn add_share(who: &T::AccountId, pool: &T::PoolId, add_\nif add_amount.is_zero() {\nreturn;\n}\nPoolInfos::<T>::mutate(pool, |pool_info| {\nlet initial_total_shares = pool_info.total_\npool_info.total_shares = pool_info.total_sh\nlet mut withdrawn_inflation = Vec\npool_info\n.rewards\n.iter_mut()\n.for_each(|(reward_currency, (total\nlet reward_inflation =\nZero::zero\n} else {\nU256::from\n.\n.\n.\n.\n.\n};\n*total_reward = total_rewar\n*total_withdrawn_reward = t\nwithdrawn_inflation.\n});\nSharesAndWithdrawnRewards::<T>::mutate\n*share = share.saturating_add\n// update withdrawn inflation for e\nwithdrawn_inflation\n.into_iter()\n.for_each(|(reward_currency\nwithdrawn_rewards\n.\n.\n})\n.\n});\n});\n});\n}\nEvidently, this function is somewhat complex, i.e. the type of mathematical operations attached with it. However, that isn’t the main case here. There are completely no documentations as to why some steps are taken, this heavily stalls the auditing process as we and other security researchers don’t know what the intended behaviour is and can’t really sit to break it.\nImpact\nHard time understanding code for users/devs/auditors lead to bad integration.\nRecommended Mitigation Steps\nConsider adding better documentations to even if not all functions then at least the core/complex ones.",
+      "description_summary": "Lack of documentation in complex functions makes it difficult for developers, users, and auditors to understand the intended behavior, leading to potential misinterpretation and bad integration.",
+      "reported_status": null,
+      "is_substrate_finding": false
+    },
+    {
+      "title": "Setters should always have equality checkers",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/orml/rewards/src/lib.rs",
+          "lines": [{ "from": 252, "to": 262 }]
+        },
+        {
+          "file_path": "src/modules/incentives/src/lib.rs",
+          "lines": [{ "from": 280, "to": 312 }, 320]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "[03] Setters should always have equality checkers\nTake a look here.\npub fn set_share(who: &T::AccountId, pool: &T::PoolId, new_\nlet (share, _) = Self::shares_and_withdrawn_rewards\nif new_share > share {\nSelf::add_share(who, pool, new_share.\n} else {\nSelf::remove_share(who, pool, share.\n}\n}\nThis function sets a new share value for a pool, now there are no checks that new_share != share and as such whenever new_share == share the protocol unnecessarily (wrongly) attempts to remove via share.saturating_sub(new_share).\nAnother instance can be seen here, where the protocol in all instances of updating the amounts doesn’t check if the provided amount is not already the stored amount and as such unnecessarily updates v, see here.\npub fn update_incentive_rewards(\norigin: OriginFor<T>,\nupdates: Vec<(PoolId, Vec<(CurrencyId, Bala\n) -> DispatchResult {\nT::UpdateOrigin::ensure_origin(origin)?;\nfor (pool_id, update_list) in updates {\nif let PoolId::Dex(currency_id) = p\nensure!(currency_id.\n}\nfor (currency_id, amount)\nIncentiveRewardAmounts::<T>\nlet mut v = maybe_a\nif amount != v {\nv = amount;\nSelf\n});\n}\nif v.is_zero\n*maybe_amou\n} else {\n*maybe_amou\n}\n});\n}\n}\nOk(())\n}\nThe same idea can also be applied to this update_claim_reward_deduction_rates() function.\nImpact\nUnnecessary code execution, flawed implementation.\nRecommended Mitigation Steps\nAs a rule of thumb, all setters should always have equality checkers as passing an equal value to the already stored value hints a mistake and maybe this attempt to add/remove was meant for a different pool.",
+      "description_summary": "Missing equality checks in setters can lead to unnecessary code execution and flawed implementation when the new value is equal to the stored value.",
+      "reported_status": null,
+      "is_substrate_finding": true
+    },
+    {
+      "title": "OnUpdateLoan::happened() should check for when adjustment == 0",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/modules/incentives/src/lib.rs",
+          "lines": [{ "from": 578, "to": 587 }]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Error Handling and Validation",
+      "description": "[04] OnUpdateLoan::happened() should check for when adjustment == 0\nTake a look here.\nfn happened(info: &(T::AccountId, CurrencyId, Amount, Balan\nlet (who, currency_id, adjustment, _previous_amount\nlet adjustment_abs = TryInto::<Balance>::\nif adjustment.is_positive() {\n<orml_rewards::Pallet<T>>::add_share\n} else {\n<orml_rewards::Pallet<T>>::remove_share\n};\n}\nThis function has been used to settle adjustments in the protocol. The main issue about this report is the fact that adding/removing the share is dependent on if the adjustment is positive or not. This is a somewhat flawed implementation, as the is_positive() getter would actually return false for when adjustment == 0 and as such lead to an unnecessary attempt of removing 0 shares.\nImpact\nNot enough input validation is applied, not the best code structure.\nRecommended Mitigation Steps\nConsider checking in the function to ensure that for instances where adjustment == 0, neither add_shares() nor remove_shares() is called.",
+      "description_summary": "The function does not handle cases where adjustment == 0, leading to unnecessary calls to add_shares() or remove_shares().",
+      "reported_status": null,
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Protocol does not apply deadlines when dealing with critical operations",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "/src/modules/incentives/src/lib.rs",
+          "lines": [{ "from": 511, "to": 543 }]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Business Logic",
+      "description": "[05] Protocol does not apply deadlines when dealing with critical operations\nConsider the code here.\nfn do_deposit_dex_share(who: &T::AccountId, lp_currency_id:\nensure!(lp_currency_id.is_dex_share_currency_id\nT::Currency::transfer(lp_currency_id, who, &\n<orml_rewards::Pallet<T>>::add_share(who, &PoolId::\nSelf::deposit_event(Event::DepositDexShare {\nwho: who.clone(),\ndex_share_type: lp_currency_id,\ndeposit: amount,\n});\nOk(())\n}\nfn do_withdraw_dex_share(who: &T::AccountId, lp_currency_id\nensure!(lp_currency_id.is_dex_share_currency_id\nensure!(\n<orml_rewards::Pallet<T>>::shares_and_withd\nError::<T>::NotEnough,\n);\nT::Currency::transfer(lp_currency_id, &Self\n<orml_rewards::Pallet<T>>::remove_share(who, &PoolI\nSelf::deposit_event(Event::WithdrawDexShare {\nwho: who.clone(),\ndex_share_type: lp_currency_id,\nwithdraw: amount,\n});\nOk(())\n}\n}\nBoth functions are used to either deposit/withdraw dex shares from the LPs by passing in the currency, which is in short just like a swap. The issue is that these functions do not include any deadline protection whatsoever. The transaction could be left hanging for a long time and end up being executed in unfavorable situations.\nImpact\nThis is a pretty popular bug case, where no deadlines have been applied and could lead to users losing funds, sometimes in USD equivalent, since their transactions might execute under less favorable conditions than intended.\nRecommended Mitigation Steps\nConsider requesting a deadline to which a user would like their transaction to be hanging for, and ensure that if the deadline has passed, the function does not get executed.",
+      "description_summary": "Critical operations lack deadline protection, allowing transactions to hang and potentially execute under unfavorable conditions, leading to possible user losses.",
+      "reported_status": null,
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Fix typos",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "/src/modules/earning/src/lib.rs",
+          "lines": [{ "from": 153, "to": 158 }]
+        },
+        {
+          "file_path": "src/modules/incentives/src/lib.rs",
+          "lines": [{ "from": 258, "to": 269 }]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Code Quality",
+      "description": "[06] Fix typos\nTake a look here.\n Start unbonding tokens up to `amount`.\n If bonded amount is less than `amount`, then al\n unbonding. Token will finish unbonding after `U\n#[pallet::call_index(1)]\n#[pallet::weight(T::WeightInfo::unbond())]\npub fn unbond(origin: OriginFor<T>, #[pallet::compa\n//..sip\nThe sentence: “Token will finish unbonding after UnbondingPeriod blocks.” should instead be: ”Tokens will finish unbonding after UnbondingPeriod blocks.”\nAnother instance can be seen here.\n Claim all available multi currencies rewards fo\n\n The dispatch origin of this call must be `Signe\n\n - `pool_id`: pool type\n#[pallet::call_index(2)]\n#[pallet::weight(<T as Config>::WeightInfo::claim_r\npub fn claim_rewards(origin: OriginFor<T>, pool_id:\nlet who = ensure_signed(origin)?;\nSelf::do_claim_rewards(who, pool_id)\n}\nThe first line should be 'Claim all available multi currencies rewards for specific PoolId.' instead.",
+      "description_summary": "Typos in comments and documentation can lead to confusion and misinterpretation of intended functionality.",
+      "reported_status": null,
+      "is_substrate_finding": false
+    },
+    {
+      "title": "Consider using BST instead",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/orml/rewards/src/lib.rs",
+          "lines": [{ "from": 21, "to": 26 }]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Code Quality",
+      "description": "[07] Consider using BST instead\nTake a look here.\npub struct PoolInfo<Share: HasCompact, Balance: HasCompact, CurrencyId> {\n    Total shares amount\n    pub total_shares: Share,\n    Reward infos <reward_currency, (total_reward, total_withdrawn)>\n    pub rewards: BTreeMap<CurrencyId, (Balance, Balance)>,\n}\nEvidently, the reward infos are stored in a B-Tree map, which is, in short, an ordered map based on a B-Tree.\nB-Trees represent a fundamental compromise between cache-efficiency and actually minimizing the amount of work performed in a search. In theory, a binary search tree (BST) is the optimal choice for a sorted map, as a perfectly balanced BST performs the theoretical minimum amount of comparisons necessary to find an element (log2n).\nImpact:\nNon-optimized method of finding elements.\nRecommended Mitigation Steps:\nConsider using binary search trees instead.",
+      "description_summary": "Non-optimized element lookup due to the use of a B-Tree map instead of a more efficient binary search tree (BST).",
+      "reported_status": null,
+      "is_substrate_finding": true
+    },
+    {
+      "title": "Consider not switching oﬀ important clippy protection methods",
+      "repository": "https://github.com/code-423n4/2024-03-acala",
+      "audited_commit": "9c71c05cf2d9f0a2603984c50f76fc8a315d4d65",
+      "reported_remediated_commit": null,
+      "location": [
+        {
+          "file_path": "src/orml/rewards/src/lib.rs",
+          "lines": [{ "from": 1, "to": 3 }]
+        }
+      ],
+      "reported_impact": "Low",
+      "reported_likelihood": null,
+      "cwe_classification": null,
+      "vulnerability_class_audit": null,
+      "vulnerability_class_scout": "Code Quality",
+      "description": "[08] Consider not switching off important clippy protection methods\nTake a look here.\n#![cfg_attr(not(feature = std), no_std)]\n#![allow(clippy::unused_unit)]\n#![allow(clippy::too_many_arguments)]\nProtocol disallows clippy to run the auto tool to warn about unused units or too many arguments; whereas too many arguments could be understandable since it’s for the claim_one() function here. A justification can’t be made for not wanting to use clippy::unused_unit.\nImpact:\nBad code structure.\nRecommended Mitigation Steps:\nIn most cases, implementations that have unused units are mostly flawed and should be sorted out.\nLambda (judge) commented:\nSome of the other ones are opinionated, but not necessarily invalid.\nxlc (Acala) disputed and commented:\n[01], [05], and [07] are completely invalid. Others are super minor.\n[01] - is 100% not an issue. This is how Substrate pallet works.\n[05] - doesn’t make sense. There is no swap happening. The LP tokens are minted already and this only stakes the already minted token.\n[07] - doesn’t make sense and wouldn’t make any difference anyway for the given amount of expected items. It is a premature optimization.",
+      "description_summary": "The code disables important Clippy protection methods, allowing potential bad code structures due to unused units and excessive function arguments.",
+      "reported_status": null,
+      "is_substrate_finding": true
+    }
+  ]
+}
