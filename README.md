@@ -51,7 +51,7 @@ This dataset currently contains the following audited Substrate projects:
 | 12                 | Bifrost                   | Oak Security           |
 | 13                 | HydraDX                   | Security Research Labs |
 | 14                 | LAOS                      | CoinFabrik             |
-| 15                 | GableFinance              | Hacken                 |
+| 15                 | Acala                     | Code4Arena             |
 | 16                 | PolkadotRunetimeTemplates | Security Research Labs |
 | 17                 | Acala                     | Trail of Bits          |
 | 18                 | Astar                     | Quantstamp             |
